@@ -51,6 +51,10 @@ public class RestaurantOrder {
     private LocalDateTime closedAt;
 
     @CreationTimestamp
+    @Column(name = "opened_at", nullable = false, updatable = false)
+    private LocalDateTime openedAt;
+
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

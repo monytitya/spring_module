@@ -38,7 +38,8 @@ public class DiscountController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DiscountResponse> updateDiscount(@PathVariable Long id, @RequestBody DiscountRequest request) {
+    public ResponseEntity<DiscountResponse> updateDiscount(@PathVariable Long id,
+            @RequestBody DiscountRequest request) {
         return ResponseEntity.ok(discountService.updateDiscount(id, request));
     }
 
