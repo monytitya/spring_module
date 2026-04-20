@@ -1,5 +1,7 @@
 package Springboot_April.spring_april.service;
 
+import Springboot_April.spring_april.dto.RoleResponse;
+import Springboot_April.spring_april.mapper.RoleMapper;
 import Springboot_April.spring_april.model.Role;
 import Springboot_April.spring_april.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,30 +12,36 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RoleService {
 
     private final RoleRepository roleRepository;
+    private final RoleMapper roleMapper;
 
-    public List<Role> getAllRoles() {
-        return roleRepository.findAll();
+    public List<RoleResponse> getAllRoles() {
+        return roleRepository.findAll().stream()
+                .map(roleMapper::toResponse)
+                .toList();
     }
 
-    public Role getRoleById(Long id) {
-        return roleRepository.findById(id)
+    public RoleResponse getRoleById(Long id) {
+        Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
+        return roleMapper.toResponse(role);
     }
 
     @Transactional
-    public Role createRole(Role role) {
-        return roleRepository.save(role);
+    public RoleResponse createRole(Role role) {
+        return roleMapper.toResponse(roleRepository.save(role));
     }
 
     @Transactional
-    public Role updateRole(Long id, Role details) {
-        Role role = getRoleById(id);
+    public RoleResponse updateRole(Long id, Role details) {
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
         role.setName(details.getName());
         role.setDescription(details.getDescription());
-        return roleRepository.save(role);
+        return roleMapper.toResponse(roleRepository.save(role));
     }
 
     @Transactional

@@ -1,7 +1,7 @@
 package Springboot_April.spring_april.controller;
 
 import Springboot_April.spring_april.dto.DiscountRequest;
-import Springboot_April.spring_april.model.Discount;
+import Springboot_April.spring_april.dto.DiscountResponse;
 import Springboot_April.spring_april.service.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,39 +18,28 @@ public class DiscountController {
     private final DiscountService discountService;
 
     @GetMapping
-    public ResponseEntity<List<Discount>> getAllDiscounts() {
+    public ResponseEntity<List<DiscountResponse>> getAllDiscounts() {
         return ResponseEntity.ok(discountService.getAllDiscounts());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Discount> getDiscount(@PathVariable Long id) {
+    public ResponseEntity<DiscountResponse> getDiscount(@PathVariable Long id) {
         return ResponseEntity.ok(discountService.getDiscountById(id));
     }
 
+    @GetMapping("/code/{code}")
+    public ResponseEntity<DiscountResponse> getByCode(@PathVariable String code) {
+        return ResponseEntity.ok(discountService.getByCode(code));
+    }
+
     @PostMapping
-    public ResponseEntity<Discount> createDiscount(@RequestBody DiscountRequest request) {
-        Discount discount = Discount.builder()
-                .code(request.code())
-                .type(request.type())
-                .value(request.value())
-                .validFrom(request.validFrom())
-                .validUntil(request.validUntil())
-                .active(request.active())
-                .build();
-        return ResponseEntity.ok(discountService.createDiscount(discount));
+    public ResponseEntity<DiscountResponse> createDiscount(@RequestBody DiscountRequest request) {
+        return ResponseEntity.ok(discountService.createDiscount(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Discount> updateDiscount(@PathVariable Long id, @RequestBody DiscountRequest request) {
-        Discount details = Discount.builder()
-                .code(request.code())
-                .type(request.type())
-                .value(request.value())
-                .validFrom(request.validFrom())
-                .validUntil(request.validUntil())
-                .active(request.active())
-                .build();
-        return ResponseEntity.ok(discountService.updateDiscount(id, details));
+    public ResponseEntity<DiscountResponse> updateDiscount(@PathVariable Long id, @RequestBody DiscountRequest request) {
+        return ResponseEntity.ok(discountService.updateDiscount(id, request));
     }
 
     @DeleteMapping("/{id}")

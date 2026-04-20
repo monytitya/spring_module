@@ -1,6 +1,8 @@
 package Springboot_April.spring_april.service;
 
 import Springboot_April.spring_april.dto.PaymentRequest;
+import Springboot_April.spring_april.dto.PaymentResponse;
+import Springboot_April.spring_april.mapper.PaymentMapper;
 import Springboot_April.spring_april.model.Payment;
 import Springboot_April.spring_april.model.RestaurantOrder;
 import Springboot_April.spring_april.model.RestaurantTable;
@@ -14,17 +16,32 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final TableRepository tableRepository;
+    private final PaymentMapper paymentMapper;
+
+    public List<PaymentResponse> getAllPayments() {
+        return paymentRepository.findAll().stream()
+                .map(paymentMapper::toResponse)
+                .toList();
+    }
+
+    public PaymentResponse getPaymentById(Long id) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        return paymentMapper.toResponse(payment);
+    }
 
     @Transactional
-    public Payment processPayment(PaymentRequest request) {
+    public PaymentResponse processPayment(PaymentRequest request) {
         RestaurantOrder order = orderRepository.findById(request.orderId())
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -43,10 +60,20 @@ public class PaymentService {
         
         // Update table status back to available
         RestaurantTable table = order.getTable();
-        table.setStatus(TableStatus.available);
+        if (table != null) {
+            table.setStatus(TableStatus.available);
+            tableRepository.save(table);
+        }
 
         orderRepository.save(order);
-        tableRepository.save(table);
-        return paymentRepository.save(payment);
+        return paymentMapper.toResponse(paymentRepository.save(payment));
+    }
+
+    @Transactional
+    public void deletePayment(Long id) {
+        if (!paymentRepository.existsById(id)) {
+            throw new RuntimeException("Payment not found");
+        }
+        paymentRepository.deleteById(id);
     }
 }

@@ -1,5 +1,7 @@
 package Springboot_April.spring_april.service;
 
+import Springboot_April.spring_april.dto.CustomerRequest;
+import Springboot_April.spring_april.dto.CustomerResponse;
 import Springboot_April.spring_april.mapper.CustomerMapper;
 import Springboot_April.spring_april.model.Customer;
 import Springboot_April.spring_april.repository.CustomerRepository;
@@ -12,41 +14,50 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
 
-    public List<Customer> getAllActiveCustomers() {
-        // Simple filter for now; real apps might use a specification or custom repository method
+    public List<CustomerResponse> getAllActiveCustomers() {
         return customerRepository.findAll().stream()
                 .filter(c -> c.getDeletedAt() == null)
+                .map(customerMapper::toResponse)
                 .toList();
     }
 
-    public Customer getCustomerById(Long id) {
-        return customerRepository.findById(id)
+    public CustomerResponse getCustomerById(Long id) {
+        Customer customer = customerRepository.findById(id)
                 .filter(c -> c.getDeletedAt() == null)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
+        return customerMapper.toResponse(customer);
     }
 
     @Transactional
-    public Customer createCustomer(Customer customer) {
-        return customerRepository.save(customer);
+    public CustomerResponse createCustomer(CustomerRequest request) {
+        Customer customer = customerMapper.toEntity(request);
+        return customerMapper.toResponse(customerRepository.save(customer));
     }
 
     @Transactional
-    public Customer updateCustomer(Long id, Customer details) {
-        Customer customer = getCustomerById(id);
-        customer.setName(details.getName());
-        customer.setPhone(details.getPhone());
-        customer.setEmail(details.getEmail());
-        return customerRepository.save(customer);
+    public CustomerResponse updateCustomer(Long id, CustomerRequest request) {
+        Customer customer = customerRepository.findById(id)
+                .filter(c -> c.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        
+        customer.setName(request.name());
+        customer.setPhone(request.phone());
+        customer.setEmail(request.email());
+        
+        return customerMapper.toResponse(customerRepository.save(customer));
     }
 
     @Transactional
     public void deleteCustomer(Long id) {
-        Customer customer = getCustomerById(id);
+        Customer customer = customerRepository.findById(id)
+                .filter(c -> c.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
         customer.setDeletedAt(LocalDateTime.now());
         customerRepository.save(customer);
     }

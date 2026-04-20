@@ -1,6 +1,6 @@
 package Springboot_April.spring_april.controller;
 
-import Springboot_April.spring_april.model.KitchenTicket;
+import Springboot_April.spring_april.dto.KitchenTicketResponse;
 import Springboot_April.spring_april.enums.KitchenStatus;
 import Springboot_April.spring_april.service.KitchenService;
 import lombok.RequiredArgsConstructor;
@@ -17,21 +17,31 @@ public class KitchenController {
 
     private final KitchenService kitchenService;
 
-    @GetMapping("/tickets/active")
-    public ResponseEntity<List<KitchenTicket>> getActiveTickets() {
+    @GetMapping("/active")
+    public ResponseEntity<List<KitchenTicketResponse>> getActiveTickets() {
         return ResponseEntity.ok(kitchenService.getActiveTickets());
     }
 
-    @PostMapping("/tickets/{orderItemId}")
-    public ResponseEntity<KitchenTicket> createTicket(@PathVariable Long orderItemId) {
+    @GetMapping("/{id}")
+    public ResponseEntity<KitchenTicketResponse> getTicket(@PathVariable Long id) {
+        return ResponseEntity.ok(kitchenService.getTicketById(id));
+    }
+
+    @PostMapping("/order-item/{orderItemId}")
+    public ResponseEntity<KitchenTicketResponse> createTicket(@PathVariable Long orderItemId) {
         return ResponseEntity.ok(kitchenService.createTicket(orderItemId));
     }
 
-    @PatchMapping("/tickets/{ticketId}/status")
-    public ResponseEntity<Void> updateStatus(
-            @PathVariable Long ticketId, 
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<KitchenTicketResponse> updateStatus(
+            @PathVariable Long id,
             @RequestParam KitchenStatus status) {
-        kitchenService.updateTicketStatus(ticketId, status);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(kitchenService.updateTicketStatus(id, status));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTicket(@PathVariable Long id) {
+        kitchenService.deleteTicket(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,103 +1,48 @@
 package Springboot_April.spring_april.service;
 
-import Springboot_April.spring_april.dto.OrderRequest;
-import Springboot_April.spring_april.model.*;
+import Springboot_April.spring_april.dto.OrderResponse;
+import Springboot_April.spring_april.mapper.OrderMapper;
+import Springboot_April.spring_april.model.Discount;
+import Springboot_April.spring_april.model.RestaurantOrder;
 import Springboot_April.spring_april.enums.DiscountType;
-import Springboot_April.spring_april.enums.OrderStatus;
-import Springboot_April.spring_april.enums.TableStatus;
-import Springboot_April.spring_april.repository.*;
+import Springboot_April.spring_april.repository.DiscountRepository;
+import Springboot_April.spring_april.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final TableRepository tableRepository;
-    private final StaffRepository staffRepository;
-    private final MenuItemRepository menuItemRepository;
     private final DiscountRepository discountRepository;
+    private final OrderMapper orderMapper;
 
-    @Transactional
-    public RestaurantOrder createOrder(OrderRequest request) {
-        RestaurantTable table = tableRepository.findById(request.tableId())
-                .orElseThrow(() -> new RuntimeException("Table not found"));
-        
-        Staff staff = staffRepository.findById(request.staffId())
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+    public List<OrderResponse> getAllOrders() {
+        return orderRepository.findAll().stream()
+                .map(orderMapper::toResponse)
+                .toList();
+    }
 
-        RestaurantOrder order = RestaurantOrder.builder()
-                .table(table)
-                .staff(staff)
-                .status(OrderStatus.open)
-                .totalAmount(BigDecimal.ZERO)
-                .finalAmount(BigDecimal.ZERO)
-                .build();
-
-        RestaurantOrder savedOrder = orderRepository.save(order);
-
-        // Update table status
-        table.setStatus(TableStatus.occupied);
-        tableRepository.save(table);
-
-        if (request.items() != null) {
-            for (OrderRequest.OrderItemRequest itemReq : request.items()) {
-                addOrderItem(savedOrder.getId(), itemReq);
-            }
-        }
-
-        return savedOrder;
+    public OrderResponse getOrderById(Long id) {
+        RestaurantOrder order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        return orderMapper.toResponse(order);
     }
 
     @Transactional
-    public OrderItem addOrderItem(Long orderId, OrderRequest.OrderItemRequest request) {
+    public OrderResponse applyDiscount(Long orderId, Long discountId) {
         RestaurantOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-        
-        MenuItem menuItem = menuItemRepository.findById(request.menuItemId())
-                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        Discount discount = discountRepository.findById(discountId)
+                .orElseThrow(() -> new RuntimeException("Discount not found"));
 
-        OrderItem orderItem = OrderItem.builder()
-                .order(order)
-                .menuItem(menuItem)
-                .quantity(request.quantity())
-                .unitPrice(menuItem.getPrice())
-                .note(request.notes())
-                .build();
-
-        OrderItem savedItem = orderItemRepository.save(orderItem);
-        recalculateTotals(order);
-        return savedItem;
-    }
-
-    @Transactional
-    public void recalculateTotals(RestaurantOrder order) {
-        BigDecimal total = orderItemRepository.findByOrderId(order.getId())
-                .stream()
-                .map(item -> item.getUnitPrice().multiply(new BigDecimal(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        order.setTotalAmount(total);
-        
-        if (order.getDiscount() != null) {
-            applyDiscount(order, order.getDiscount());
-        } else {
-            order.setFinalAmount(total);
-        }
-        
-        orderRepository.save(order);
-    }
-
-    @Transactional
-    public void applyDiscount(RestaurantOrder order, Discount discount) {
         BigDecimal total = order.getTotalAmount();
         BigDecimal finalAmount;
 
@@ -110,6 +55,15 @@ public class OrderService {
 
         order.setDiscount(discount);
         order.setFinalAmount(finalAmount.setScale(2, RoundingMode.HALF_UP));
-        orderRepository.save(order);
+        
+        return orderMapper.toResponse(orderRepository.save(order));
+    }
+
+    @Transactional
+    public void deleteOrder(Long id) {
+        if (!orderRepository.existsById(id)) {
+            throw new RuntimeException("Order not found");
+        }
+        orderRepository.deleteById(id);
     }
 }

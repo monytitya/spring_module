@@ -1,15 +1,14 @@
 package Springboot_April.spring_april.controller;
 
 import Springboot_April.spring_april.dto.OrderRequest;
-import Springboot_April.spring_april.dto.PaymentRequest;
-import Springboot_April.spring_april.model.OrderItem;
-import Springboot_April.spring_april.model.Payment;
-import Springboot_April.spring_april.model.RestaurantOrder;
+import Springboot_April.spring_april.dto.OrderResponse;
 import Springboot_April.spring_april.execute.OrderExecution;
-import Springboot_April.spring_april.execute.PaymentExecution;
+import Springboot_April.spring_april.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -17,29 +16,45 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class OrderController {
 
+    private final OrderService orderService;
     private final OrderExecution orderExecution;
-    private final PaymentExecution paymentExecution;
 
+    @GetMapping
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+        return ResponseEntity.ok(orderService.getAllOrders());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.getOrderById(id));
+    }
+
+    /**
+     * Atomic creation: Creates order and items in one request.
+     * Prevents "double requests" from the frontend.
+     */
     @PostMapping
-    public ResponseEntity<RestaurantOrder> createOrder(@RequestBody OrderRequest request) {
+    public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest request) {
         return ResponseEntity.ok(orderExecution.executeCreateOrder(request));
     }
 
-    @PostMapping("/{orderId}/items")
-    public ResponseEntity<OrderItem> addItemToOrder(
-            @PathVariable Long orderId, 
+    @PostMapping("/{id}/items")
+    public ResponseEntity<OrderResponse> addItemToOrder(
+            @PathVariable Long id,
             @RequestBody OrderRequest.OrderItemRequest request) {
-        return ResponseEntity.ok(orderExecution.executeAddItem(orderId, request));
+        return ResponseEntity.ok(orderExecution.executeAddItem(id, request));
     }
 
-    @PostMapping("/{orderId}/pay")
-    public ResponseEntity<Payment> processPayment(
-            @PathVariable Long orderId, 
-            @RequestBody PaymentRequest request) {
-        // Ensure request has correct orderId
-        if (!orderId.equals(request.orderId())) {
-             return ResponseEntity.badRequest().build();
-        }
-        return ResponseEntity.ok(paymentExecution.executePayment(request));
+    @PostMapping("/{id}/apply-discount/{discountId}")
+    public ResponseEntity<OrderResponse> applyDiscount(
+            @PathVariable Long id,
+            @PathVariable Long discountId) {
+        return ResponseEntity.ok(orderService.applyDiscount(id, discountId));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
     }
 }

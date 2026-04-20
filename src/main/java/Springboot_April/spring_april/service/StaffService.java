@@ -25,33 +25,40 @@ public class StaffService {
     private final Springboot_April.spring_april.repository.ShiftRepository shiftRepository;
     private final Springboot_April.spring_april.repository.RoleRepository roleRepository;
     private final StaffMapper staffMapper;
+    private final Springboot_April.spring_april.mapper.StaffShiftMapper staffShiftMapper;
 
-    public List<Staff> getAllActiveStaff() {
+    public List<Springboot_April.spring_april.dto.StaffResponse> getAllActiveStaff() {
         return staffRepository.findAll().stream()
                 .filter(s -> s.getDeletedAt() == null)
+                .map(staffMapper::toResponse)
                 .toList();
     }
 
-    public Staff getStaffById(Long id) {
-        return staffRepository.findById(id)
+    public Springboot_April.spring_april.dto.StaffResponse getStaffById(Long id) {
+        Staff staff = staffRepository.findById(id)
                 .filter(s -> s.getDeletedAt() == null)
                 .orElseThrow(() -> new RuntimeException("Staff not found"));
+        return staffMapper.toResponse(staff);
     }
 
     @Transactional
-    public Staff createStaff(Springboot_April.spring_april.dto.StaffRequest request) {
-        Springboot_April.spring_april.model.Role role = null;
-        if (request.roleId() != null) {
-            role = roleRepository.findById(request.roleId())
-                    .orElseThrow(() -> new RuntimeException("Role not found"));
+    public Springboot_April.spring_april.dto.StaffResponse createStaff(Springboot_April.spring_april.dto.StaffRequest request) {
+        if (request.roleId() == null) {
+            throw new RuntimeException("Role ID is required for new staff");
         }
+        
+        Springboot_April.spring_april.model.Role role = roleRepository.findById(request.roleId())
+                .orElseThrow(() -> new RuntimeException("Role not found with ID: " + request.roleId()));
+                
         Staff staff = staffMapper.toEntity(request, role);
-        return staffRepository.save(staff);
+        return staffMapper.toResponse(staffRepository.save(staff));
     }
 
     @Transactional
-    public Staff updateStaff(Long id, Springboot_April.spring_april.dto.StaffRequest request) {
-        Staff staff = getStaffById(id);
+    public Springboot_April.spring_april.dto.StaffResponse updateStaff(Long id, Springboot_April.spring_april.dto.StaffRequest request) {
+        Staff staff = staffRepository.findById(id)
+                .filter(s -> s.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Staff not found"));
         
         if (request.roleId() != null) {
             staff.setRole(roleRepository.findById(request.roleId())
@@ -63,22 +70,25 @@ public class StaffService {
         staff.setPinCode(request.pinCode());
         staff.setStatus(request.status());
         
-        return staffRepository.save(staff);
+        return staffMapper.toResponse(staffRepository.save(staff));
     }
 
     @Transactional
     public void deleteStaff(Long id) {
-        Staff staff = getStaffById(id);
+        Staff staff = staffRepository.findById(id)
+                .filter(s -> s.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Staff not found"));
         staff.setDeletedAt(LocalDateTime.now());
         staffRepository.save(staff);
     }
 
-    public Optional<Staff> loginWithPin(String pinCode) {
-        return staffRepository.findByPinCodeAndStatus(pinCode, StaffStatus.active);
+    public java.util.Optional<Springboot_April.spring_april.dto.StaffResponse> loginWithPin(String pinCode) {
+        return staffRepository.findByPinCodeAndStatus(pinCode, StaffStatus.active)
+                .map(staffMapper::toResponse);
     }
 
     @Transactional
-    public StaffShift clockIn(Long staffId, Long shiftId) {
+    public Springboot_April.spring_april.dto.StaffShiftResponse clockIn(Long staffId, Long shiftId) {
         StaffShift shift = StaffShift.builder()
                 .staff(staffRepository.getReferenceById(staffId))
                 .shift(shiftRepository.getReferenceById(shiftId))
@@ -86,15 +96,15 @@ public class StaffService {
                 .clockIn(LocalDateTime.now())
                 .status(ShiftStatus.ongoing)
                 .build();
-        return staffShiftRepository.save(shift);
+        return staffShiftMapper.toResponse(staffShiftRepository.save(shift));
     }
 
     @Transactional
-    public StaffShift clockOut(Long staffShiftId) {
+    public Springboot_April.spring_april.dto.StaffShiftResponse clockOut(Long staffShiftId) {
         StaffShift shift = staffShiftRepository.findById(staffShiftId)
                 .orElseThrow(() -> new RuntimeException("Shift record not found"));
         shift.setClockOut(LocalDateTime.now());
         shift.setStatus(ShiftStatus.completed);
-        return staffShiftRepository.save(shift);
+        return staffShiftMapper.toResponse(staffShiftRepository.save(shift));
     }
 }

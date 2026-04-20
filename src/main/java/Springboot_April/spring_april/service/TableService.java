@@ -1,5 +1,7 @@
 package Springboot_April.spring_april.service;
 
+import Springboot_April.spring_april.dto.TableRequest;
+import Springboot_April.spring_april.dto.TableResponse;
 import Springboot_April.spring_april.mapper.TableMapper;
 import Springboot_April.spring_april.model.RestaurantTable;
 import Springboot_April.spring_april.enums.TableStatus;
@@ -12,36 +14,44 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TableService {
 
     private final TableRepository tableRepository;
     private final TableMapper tableMapper;
 
-    public List<RestaurantTable> getAvailableTables() {
-        return tableRepository.findByStatusOrderByTableNumberAsc(TableStatus.available);
+    public List<TableResponse> getAvailableTables() {
+        return tableRepository.findByStatusOrderByTableNumberAsc(TableStatus.available).stream()
+                .map(tableMapper::toResponse)
+                .toList();
     }
 
-    public List<RestaurantTable> getAllTables() {
-        return tableRepository.findAll();
+    public List<TableResponse> getAllTables() {
+        return tableRepository.findAll().stream()
+                .map(tableMapper::toResponse)
+                .toList();
     }
 
-    public RestaurantTable getTableById(Long id) {
-        return tableRepository.findById(id)
+    public TableResponse getTableById(Long id) {
+        RestaurantTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
+        return tableMapper.toResponse(table);
     }
 
     @Transactional
-    public RestaurantTable createTable(RestaurantTable table) {
-        return tableRepository.save(table);
+    public TableResponse createTable(TableRequest request) {
+        RestaurantTable table = tableMapper.toEntity(request);
+        return tableMapper.toResponse(tableRepository.save(table));
     }
 
     @Transactional
-    public RestaurantTable updateTable(Long id, RestaurantTable details) {
-        RestaurantTable table = getTableById(id);
-        table.setTableNumber(details.getTableNumber());
-        table.setCapacity(details.getCapacity());
-        table.setStatus(details.getStatus());
-        return tableRepository.save(table);
+    public TableResponse updateTable(Long id, TableRequest request) {
+        RestaurantTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+        table.setTableNumber(request.tableNumber());
+        table.setCapacity(request.capacity());
+        table.setStatus(request.status());
+        return tableMapper.toResponse(tableRepository.save(table));
     }
 
     @Transactional

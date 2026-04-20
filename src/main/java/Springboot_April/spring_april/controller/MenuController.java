@@ -1,7 +1,9 @@
 package Springboot_April.spring_april.controller;
 
-import Springboot_April.spring_april.model.MenuCategory;
-import Springboot_April.spring_april.model.MenuItem;
+import Springboot_April.spring_april.dto.MenuCategoryRequest;
+import Springboot_April.spring_april.dto.MenuCategoryResponse;
+import Springboot_April.spring_april.dto.MenuItemRequest;
+import Springboot_April.spring_april.dto.MenuItemResponse;
 import Springboot_April.spring_april.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,39 +14,39 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/menu")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Typically configured properly in security, but added for convenience
+@CrossOrigin(origins = "*")
 public class MenuController {
 
     private final MenuService menuService;
 
     @GetMapping("/categories")
-    public ResponseEntity<List<MenuCategory>> getAllCategories() {
+    public ResponseEntity<List<MenuCategoryResponse>> getAllCategories() {
         return ResponseEntity.ok(menuService.getAllCategories());
     }
 
     @GetMapping("/categories/{categoryId}/items")
-    public ResponseEntity<List<MenuItem>> getItemsByCategory(@PathVariable Long categoryId) {
+    public ResponseEntity<List<MenuItemResponse>> getItemsByCategory(@PathVariable Long categoryId) {
         return ResponseEntity.ok(menuService.getItemsByCategory(categoryId));
     }
 
     @GetMapping("/items")
-    public ResponseEntity<List<MenuItem>> getAllItems() {
+    public ResponseEntity<List<MenuItemResponse>> getAllItems() {
         return ResponseEntity.ok(menuService.getAllItems());
     }
 
     @GetMapping("/categories/{id}")
-    public ResponseEntity<MenuCategory> getCategory(@PathVariable Long id) {
+    public ResponseEntity<MenuCategoryResponse> getCategory(@PathVariable Long id) {
         return ResponseEntity.ok(menuService.getCategoryById(id));
     }
 
     @PostMapping("/categories")
-    public ResponseEntity<MenuCategory> createCategory(@RequestBody MenuCategory category) {
-        return ResponseEntity.ok(menuService.createCategory(category));
+    public ResponseEntity<MenuCategoryResponse> createCategory(@RequestBody MenuCategoryRequest request) {
+        return ResponseEntity.ok(menuService.createCategory(request));
     }
 
     @PutMapping("/categories/{id}")
-    public ResponseEntity<MenuCategory> updateCategory(@PathVariable Long id, @RequestBody MenuCategory details) {
-        return ResponseEntity.ok(menuService.updateCategory(id, details));
+    public ResponseEntity<MenuCategoryResponse> updateCategory(@PathVariable Long id, @RequestBody MenuCategoryRequest request) {
+        return ResponseEntity.ok(menuService.updateCategory(id, request));
     }
 
     @DeleteMapping("/categories/{id}")
@@ -54,18 +56,18 @@ public class MenuController {
     }
 
     @GetMapping("/items/{id}")
-    public ResponseEntity<MenuItem> getMenuItem(@PathVariable Long id) {
+    public ResponseEntity<MenuItemResponse> getMenuItem(@PathVariable Long id) {
         return ResponseEntity.ok(menuService.getItemById(id));
     }
 
     @PostMapping("/items")
-    public ResponseEntity<MenuItem> createMenuItem(@RequestBody MenuItem item) {
-        return ResponseEntity.ok(menuService.createMenuItem(item));
+    public ResponseEntity<MenuItemResponse> createMenuItem(@RequestBody MenuItemRequest request) {
+        return ResponseEntity.ok(menuService.createMenuItem(request));
     }
 
     @PutMapping("/items/{id}")
-    public ResponseEntity<MenuItem> updateMenuItem(@PathVariable Long id, @RequestBody MenuItem details) {
-        return ResponseEntity.ok(menuService.updateMenuItem(id, details));
+    public ResponseEntity<MenuItemResponse> updateMenuItem(@PathVariable Long id, @RequestBody MenuItemRequest request) {
+        return ResponseEntity.ok(menuService.updateMenuItem(id, request));
     }
 
     @DeleteMapping("/items/{id}")

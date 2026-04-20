@@ -1,5 +1,10 @@
 package Springboot_April.spring_april.service;
 
+import Springboot_April.spring_april.dto.MenuCategoryRequest;
+import Springboot_April.spring_april.dto.MenuCategoryResponse;
+import Springboot_April.spring_april.dto.MenuItemRequest;
+import Springboot_April.spring_april.dto.MenuItemResponse;
+import Springboot_April.spring_april.mapper.MenuMapper;
 import Springboot_April.spring_april.model.MenuCategory;
 import Springboot_April.spring_april.model.MenuItem;
 import Springboot_April.spring_april.repository.MenuCategoryRepository;
@@ -8,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -17,43 +23,53 @@ public class MenuService {
 
     private final MenuCategoryRepository categoryRepository;
     private final MenuItemRepository itemRepository;
+    private final MenuMapper menuMapper;
 
-    public List<MenuCategory> getAllCategories() {
-        return categoryRepository.findAllByOrderBySortOrderAsc();
-    }
-
-    public List<MenuItem> getItemsByCategory(Long categoryId) {
-        return itemRepository.findByCategoryIdAndAvailableTrue(categoryId);
-    }
-
-    public List<MenuItem> getAllItems() {
-        return itemRepository.findAll().stream()
-                .filter(i -> i.getDeletedAt() == null)
+    public List<MenuCategoryResponse> getAllCategories() {
+        return categoryRepository.findAllByOrderBySortOrderAsc().stream()
+                .map(menuMapper::toCategoryResponse)
                 .toList();
     }
 
-    public MenuCategory getCategoryById(Long id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+    public List<MenuItemResponse> getItemsByCategory(Long categoryId) {
+        return itemRepository.findByCategoryIdAndAvailableTrue(categoryId).stream()
+                .map(menuMapper::toItemResponse)
+                .toList();
     }
 
-    public MenuItem getItemById(Long id) {
-        return itemRepository.findById(id)
+    public List<MenuItemResponse> getAllItems() {
+        return itemRepository.findAll().stream()
+                .filter(i -> i.getDeletedAt() == null)
+                .map(menuMapper::toItemResponse)
+                .toList();
+    }
+
+    public MenuCategoryResponse getCategoryById(Long id) {
+        MenuCategory category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        return menuMapper.toCategoryResponse(category);
+    }
+
+    public MenuItemResponse getItemById(Long id) {
+        MenuItem item = itemRepository.findById(id)
                 .filter(i -> i.getDeletedAt() == null)
                 .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        return menuMapper.toItemResponse(item);
     }
 
     @Transactional
-    public MenuCategory createCategory(MenuCategory category) {
-        return categoryRepository.save(category);
+    public MenuCategoryResponse createCategory(MenuCategoryRequest request) {
+        MenuCategory category = menuMapper.toCategoryEntity(request);
+        return menuMapper.toCategoryResponse(categoryRepository.save(category));
     }
 
     @Transactional
-    public MenuCategory updateCategory(Long id, MenuCategory details) {
-        MenuCategory category = getCategoryById(id);
-        category.setName(details.getName());
-        category.setSortOrder(details.getSortOrder());
-        return categoryRepository.save(category);
+    public MenuCategoryResponse updateCategory(Long id, MenuCategoryRequest request) {
+        MenuCategory category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        category.setName(request.name());
+        category.setSortOrder(request.sortOrder());
+        return menuMapper.toCategoryResponse(categoryRepository.save(category));
     }
 
     @Transactional
@@ -65,25 +81,39 @@ public class MenuService {
     }
 
     @Transactional
-    public MenuItem createMenuItem(MenuItem item) {
-        return itemRepository.save(item);
+    public MenuItemResponse createMenuItem(MenuItemRequest request) {
+        MenuCategory category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        MenuItem item = menuMapper.toItemEntity(request, category);
+        return menuMapper.toItemResponse(itemRepository.save(item));
     }
 
     @Transactional
-    public MenuItem updateMenuItem(Long id, MenuItem details) {
-        MenuItem item = getItemById(id);
-        item.setName(details.getName());
-        item.setDescription(details.getDescription());
-        item.setPrice(details.getPrice());
-        item.setAvailable(details.getAvailable());
-        item.setCategory(details.getCategory());
-        return itemRepository.save(item);
+    public MenuItemResponse updateMenuItem(Long id, MenuItemRequest request) {
+        MenuItem item = itemRepository.findById(id)
+                .filter(i -> i.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        
+        if (request.categoryId() != null) {
+            MenuCategory category = categoryRepository.findById(request.categoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            item.setCategory(category);
+        }
+        
+        item.setName(request.name());
+        item.setDescription(request.description());
+        item.setPrice(request.price());
+        item.setAvailable(request.available() != null ? request.available() : item.getAvailable());
+        
+        return menuMapper.toItemResponse(itemRepository.save(item));
     }
 
     @Transactional
     public void deleteMenuItem(Long id) {
-        MenuItem item = getItemById(id);
-        item.setDeletedAt(java.time.LocalDateTime.now());
+        MenuItem item = itemRepository.findById(id)
+                .filter(i -> i.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        item.setDeletedAt(LocalDateTime.now());
         item.setAvailable(false);
         itemRepository.save(item);
     }

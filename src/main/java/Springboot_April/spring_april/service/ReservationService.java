@@ -1,8 +1,14 @@
 package Springboot_April.spring_april.service;
 
+import Springboot_April.spring_april.dto.ReservationRequest;
+import Springboot_April.spring_april.dto.ReservationResponse;
 import Springboot_April.spring_april.mapper.ReservationMapper;
 import Springboot_April.spring_april.model.Reservation;
+import Springboot_April.spring_april.model.RestaurantTable;
+import Springboot_April.spring_april.model.Customer;
 import Springboot_April.spring_april.repository.ReservationRepository;
+import Springboot_April.spring_april.repository.TableRepository;
+import Springboot_April.spring_april.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,35 +17,60 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
+    private final TableRepository tableRepository;
+    private final CustomerRepository customerRepository;
     private final ReservationMapper reservationMapper;
 
-    public List<Reservation> getAllReservations() {
-        return reservationRepository.findAll();
+    public List<ReservationResponse> getAllReservations() {
+        return reservationRepository.findAll().stream()
+                .map(reservationMapper::toResponse)
+                .toList();
     }
 
-    public Reservation getReservationById(Long id) {
-        return reservationRepository.findById(id)
+    public ReservationResponse getReservationById(Long id) {
+        Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
+        return reservationMapper.toResponse(reservation);
     }
 
     @Transactional
-    public Reservation createReservation(Reservation reservation) {
-        return reservationRepository.save(reservation);
+    public ReservationResponse createReservation(ReservationRequest request) {
+        RestaurantTable table = tableRepository.findById(request.tableId())
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+        Customer customer = customerRepository.findById(request.customerId())
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        Reservation reservation = reservationMapper.toEntity(request, table, customer);
+        return reservationMapper.toResponse(reservationRepository.save(reservation));
     }
 
     @Transactional
-    public Reservation updateReservation(Long id, Reservation details) {
-        Reservation reservation = getReservationById(id);
-        reservation.setTable(details.getTable());
-        reservation.setCustomer(details.getCustomer());
-        reservation.setReservedAt(details.getReservedAt());
-        reservation.setGuestCount(details.getGuestCount());
-        reservation.setStatus(details.getStatus());
-        reservation.setNote(details.getNote());
-        return reservationRepository.save(reservation);
+    public ReservationResponse updateReservation(Long id, ReservationRequest request) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        if (request.tableId() != null) {
+            RestaurantTable table = tableRepository.findById(request.tableId())
+                    .orElseThrow(() -> new RuntimeException("Table not found"));
+            reservation.setTable(table);
+        }
+        
+        if (request.customerId() != null) {
+            Customer customer = customerRepository.findById(request.customerId())
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
+            reservation.setCustomer(customer);
+        }
+
+        reservation.setReservedAt(request.reservedAt());
+        reservation.setGuestCount(request.guestCount());
+        reservation.setStatus(request.status());
+        reservation.setNote(request.note());
+
+        return reservationMapper.toResponse(reservationRepository.save(reservation));
     }
 
     @Transactional
