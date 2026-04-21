@@ -155,7 +155,9 @@ public class DataInitializer implements CommandLineRunner {
                         .staff(staff)
                         .status(OrderStatus.open)
                         .totalAmount(menuItem.getPrice())
+                        .discountAmount(java.math.BigDecimal.ZERO)
                         .finalAmount(menuItem.getPrice())
+                        .paidAmount(java.math.BigDecimal.ZERO)
                         .build();
 
                 OrderItem item = OrderItem.builder()

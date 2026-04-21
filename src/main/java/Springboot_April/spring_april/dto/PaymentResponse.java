@@ -13,5 +13,11 @@ public record PaymentResponse(
     BigDecimal amount,
     BigDecimal discountAmount,
     String khqrRef,
-    LocalDateTime paidAt
+    LocalDateTime paidAt,
+    /** Total paid on the order after this payment. */
+    BigDecimal totalPaidAmount,
+    /** Amount still owed on the order after this payment. */
+    BigDecimal remainingAmount,
+    /** Order status after this payment (open / partial / closed). */
+    String orderStatus
 ) {}

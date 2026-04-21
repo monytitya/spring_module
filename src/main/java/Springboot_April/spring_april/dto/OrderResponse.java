@@ -16,8 +16,14 @@ public record OrderResponse(
     BigDecimal totalAmount,
     BigDecimal discountAmount,
     BigDecimal finalAmount,
+    /** Cumulative amount paid so far. */
+    BigDecimal paidAmount,
+    /** Amount still owed (finalAmount - paidAmount). */
+    BigDecimal remainingAmount,
     LocalDateTime createdAt,
-    List<OrderItemResponse> items
+    List<OrderItemResponse> items,
+    /** Full payment transaction history for this order. */
+    List<PaymentResponse> payments
 ) {
     @Builder
     public record OrderItemResponse(

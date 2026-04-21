@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -32,6 +33,7 @@ public class RestaurantOrder {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private OrderStatus status = OrderStatus.open;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -39,13 +41,22 @@ public class RestaurantOrder {
     private Discount discount;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+    @Builder.Default
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(name = "discount_amount", precision = 10, scale = 2)
+    @Builder.Default
     private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @Column(name = "final_amount", nullable = false, precision = 10, scale = 2)
+    @Builder.Default
     private BigDecimal finalAmount = BigDecimal.ZERO;
+
+    /** Cumulative amount paid so far across all payment transactions. */
+    @Column(name = "paid_amount", nullable = false, precision = 10, scale = 2,
+            columnDefinition = "DECIMAL(10,2) NOT NULL DEFAULT 0.00")
+    @Builder.Default
+    private BigDecimal paidAmount = BigDecimal.ZERO;
 
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
@@ -64,5 +75,10 @@ public class RestaurantOrder {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<OrderItem> items = new java.util.ArrayList<>();
+    private List<OrderItem> items = new ArrayList<>();
+
+    /** All payment transactions made against this order. */
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Payment> payments = new ArrayList<>();
 }

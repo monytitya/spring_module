@@ -20,8 +20,9 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    // ManyToOne — one order can have MANY payments (split, partial, multiple rounds)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
     private RestaurantOrder order;
 
     @Enumerated(EnumType.STRING)
@@ -32,6 +33,7 @@ public class Payment {
     private BigDecimal amount;
 
     @Column(name = "discount_amount", precision = 10, scale = 2)
+    @Builder.Default
     private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @Column(name = "khqr_ref", length = 100)
