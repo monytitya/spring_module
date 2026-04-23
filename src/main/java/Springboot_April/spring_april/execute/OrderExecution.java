@@ -9,8 +9,10 @@ import Springboot_April.spring_april.enums.TableStatus;
 import Springboot_April.spring_april.mapper.OrderMapper;
 import Springboot_April.spring_april.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -29,9 +31,13 @@ public class OrderExecution {
     @Transactional
     public OrderResponse executeCreateOrder(OrderRequest request) {
         RestaurantTable table = tableRepository.findById(request.tableId())
-                .orElseThrow(() -> new RuntimeException("Table not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Table not found with ID: " + request.tableId() +
+                        ". Call GET /api/tables to see available table IDs."));
         Staff staff = staffRepository.findById(request.staffId())
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Staff not found with ID: " + request.staffId() +
+                        ". Call GET /api/staff to see available staff IDs."));
 
         RestaurantOrder order = RestaurantOrder.builder()
                 .table(table)
@@ -49,7 +55,9 @@ public class OrderExecution {
         if (request.items() != null) {
             for (OrderRequest.OrderItemRequest itemReq : request.items()) {
                 MenuItem menuItem = menuItemRepository.findById(itemReq.menuItemId())
-                        .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemReq.menuItemId()));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "Menu item not found with ID: " + itemReq.menuItemId() +
+                                ". Call GET /api/menu/items to see available menu item IDs."));
 
                 BigDecimal subtotal = menuItem.getPrice().multiply(BigDecimal.valueOf(itemReq.quantity()));
 
@@ -81,9 +89,12 @@ public class OrderExecution {
     @Transactional
     public OrderResponse executeAddItem(Long orderId, OrderRequest.OrderItemRequest request) {
         RestaurantOrder order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Order not found with ID: " + orderId));
         MenuItem menuItem = menuItemRepository.findById(request.menuItemId())
-                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Menu item not found with ID: " + request.menuItemId() +
+                        ". Call GET /api/menu/items to see available menu item IDs."));
 
         BigDecimal subtotal = menuItem.getPrice().multiply(BigDecimal.valueOf(request.quantity()));
 

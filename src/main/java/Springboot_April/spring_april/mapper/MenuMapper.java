@@ -36,6 +36,7 @@ public class MenuMapper {
                 .description(request.description())
                 .price(request.price())
                 .available(request.available() != null ? request.available() : true)
+                .imagePath(request.imagePath())
                 .build();
     }
 
@@ -49,6 +50,7 @@ public class MenuMapper {
                 .description(entity.getDescription())
                 .price(entity.getPrice())
                 .available(entity.getAvailable())
+                .imagePath(entity.getImagePath())
                 .build();
     }
 }

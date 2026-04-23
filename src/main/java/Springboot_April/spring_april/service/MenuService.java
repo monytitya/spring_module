@@ -117,4 +117,13 @@ public class MenuService {
         item.setAvailable(false);
         itemRepository.save(item);
     }
+
+    @Transactional
+    public MenuItemResponse updateItemImage(Long id, String imagePath) {
+        MenuItem item = itemRepository.findById(id)
+                .filter(i -> i.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        item.setImagePath(imagePath);
+        return menuMapper.toItemResponse(itemRepository.save(item));
+    }
 }

@@ -6,18 +6,26 @@ import Springboot_April.spring_april.dto.MenuItemRequest;
 import Springboot_April.spring_april.dto.MenuItemResponse;
 import Springboot_April.spring_april.service.MenuService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/menu")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class MenuController {
 
     private final MenuService menuService;
+    private final Springboot_April.spring_april.service.FileUploadService fileUploadService;
+
+    @Autowired
+    public MenuController(MenuService menuService, Springboot_April.spring_april.service.FileUploadService fileUploadService) {
+        this.menuService = menuService;
+        this.fileUploadService = fileUploadService;
+    }
 
     @GetMapping("/categories")
     public ResponseEntity<List<MenuCategoryResponse>> getAllCategories() {
@@ -74,5 +82,13 @@ public class MenuController {
     public ResponseEntity<Void> deleteMenuItem(@PathVariable Long id) {
         menuService.deleteMenuItem(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/items/{id}/image")
+    public ResponseEntity<MenuItemResponse> uploadItemImage(
+            @PathVariable Long id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        String imagePath = fileUploadService.storeFile(file);
+        return ResponseEntity.ok(menuService.updateItemImage(id, imagePath));
     }
 }

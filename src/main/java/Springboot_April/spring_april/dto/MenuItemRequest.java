@@ -7,5 +7,6 @@ public record MenuItemRequest(
     String name,
     String description,
     BigDecimal price,
-    Boolean available
+    Boolean available,
+    String imagePath
 ) {}

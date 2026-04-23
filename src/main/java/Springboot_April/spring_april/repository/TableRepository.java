@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface TableRepository extends JpaRepository<RestaurantTable, Long> {
     List<RestaurantTable> findByStatusOrderByTableNumberAsc(TableStatus status);
+    java.util.Optional<RestaurantTable> findByTableNumber(String tableNumber);
 }

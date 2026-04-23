@@ -44,6 +44,9 @@ public class MenuItem {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "image_path")
+    private String imagePath;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

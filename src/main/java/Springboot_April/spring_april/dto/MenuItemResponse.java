@@ -11,5 +11,6 @@ public record MenuItemResponse(
     String name,
     String description,
     BigDecimal price,
-    Boolean available
+    Boolean available,
+    String imagePath
 ) {}
