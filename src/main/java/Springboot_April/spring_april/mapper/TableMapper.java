@@ -15,6 +15,7 @@ public class TableMapper {
                 .tableNumber(request.tableNumber())
                 .capacity(request.capacity())
                 .status(request.status())
+                .imagePath(request.imagePath())
                 .build();
     }
 
@@ -25,6 +26,7 @@ public class TableMapper {
                 .tableNumber(entity.getTableNumber())
                 .capacity(entity.getCapacity())
                 .status(entity.getStatus())
+                .imagePath(entity.getImagePath())
                 .build();
     }
 }

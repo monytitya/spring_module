@@ -3,6 +3,7 @@ export interface Table {
   tableNumber: string;
   capacity: number;
   status: 'available' | 'occupied';
+  imagePath?: string;
 }
 
 export interface Staff {

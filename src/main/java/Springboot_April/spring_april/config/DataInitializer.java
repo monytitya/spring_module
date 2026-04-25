@@ -21,6 +21,7 @@ import Springboot_April.spring_april.model.OrderItem;
 import Springboot_April.spring_april.enums.OrderStatus;
 import Springboot_April.spring_april.enums.KitchenStatus;
 import Springboot_April.spring_april.repository.OrderRepository;
+import Springboot_April.spring_april.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -41,6 +42,7 @@ public class DataInitializer implements CommandLineRunner {
     private final MenuCategoryRepository menuCategoryRepository;
     private final MenuItemRepository menuItemRepository;
     private final OrderRepository orderRepository;
+    private final ReservationRepository reservationRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -59,6 +61,11 @@ public class DataInitializer implements CommandLineRunner {
         tableRepository.findAll().stream()
                 .filter(t -> "string".equalsIgnoreCase(t.getTableNumber()))
                 .forEach(t -> {
+                    // Delete reservations linked to this table first
+                    reservationRepository.findByTable(t).forEach(res -> {
+                        reservationRepository.delete(res);
+                    });
+                    
                     // Delete orders linked to this table first to satisfy FK constraints
                     orderRepository.findByTable(t).forEach(order -> {
                         orderRepository.delete(order);

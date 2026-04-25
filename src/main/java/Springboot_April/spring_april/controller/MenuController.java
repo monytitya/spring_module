@@ -69,12 +69,12 @@ public class MenuController {
     }
 
     @PostMapping("/items")
-    public ResponseEntity<MenuItemResponse> createMenuItem(@RequestBody MenuItemRequest request) {
+    public ResponseEntity<MenuItemResponse> createMenuItem(@jakarta.validation.Valid @RequestBody MenuItemRequest request) {
         return ResponseEntity.ok(menuService.createMenuItem(request));
     }
 
     @PutMapping("/items/{id}")
-    public ResponseEntity<MenuItemResponse> updateMenuItem(@PathVariable Long id, @RequestBody MenuItemRequest request) {
+    public ResponseEntity<MenuItemResponse> updateMenuItem(@PathVariable Long id, @jakarta.validation.Valid @RequestBody MenuItemRequest request) {
         return ResponseEntity.ok(menuService.updateMenuItem(id, request));
     }
 

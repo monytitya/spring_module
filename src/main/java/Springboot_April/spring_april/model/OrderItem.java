@@ -52,4 +52,7 @@ public class OrderItem {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToOne(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private KitchenTicket kitchenTicket;
 }

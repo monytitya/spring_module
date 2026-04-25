@@ -52,7 +52,6 @@ public class RestaurantOrder {
     @Builder.Default
     private BigDecimal finalAmount = BigDecimal.ZERO;
 
-    /** Cumulative amount paid so far across all payment transactions. */
     @Column(name = "paid_amount", nullable = false, precision = 10, scale = 2,
             columnDefinition = "DECIMAL(10,2) NOT NULL DEFAULT 0.00")
     @Builder.Default

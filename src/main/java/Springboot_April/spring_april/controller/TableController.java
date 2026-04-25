@@ -16,6 +16,7 @@ import java.util.List;
 public class TableController {
 
     private final TableService tableService;
+    private final Springboot_April.spring_april.service.FileUploadService fileUploadService;
 
     @GetMapping
     public ResponseEntity<List<TableResponse>> getAllTables() {
@@ -46,5 +47,14 @@ public class TableController {
     public ResponseEntity<Void> deleteTable(@PathVariable Long id) {
         tableService.deleteTable(id);
         return ResponseEntity.noContent().build();
+    }
+
+
+    @PostMapping("/{id}/image")
+    public ResponseEntity<TableResponse> uploadTableImage(
+            @PathVariable Long id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        String imagePath = fileUploadService.storeFile(file);
+        return ResponseEntity.ok(tableService.updateTableImage(id, imagePath));
     }
 }

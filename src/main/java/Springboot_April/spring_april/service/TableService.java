@@ -69,4 +69,12 @@ public class TableService {
         table.setStatus(status);
         tableRepository.save(table);
     }
+
+    @Transactional
+    public TableResponse updateTableImage(Long id, String imagePath) {
+        RestaurantTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+        table.setImagePath(imagePath);
+        return tableMapper.toResponse(tableRepository.save(table));
+    }
 }

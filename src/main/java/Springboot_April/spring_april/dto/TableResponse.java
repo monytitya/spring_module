@@ -8,5 +8,6 @@ public record TableResponse(
     Long id,
     String tableNumber,
     Integer capacity,
-    TableStatus status
+    TableStatus status,
+    String imagePath
 ) {}
