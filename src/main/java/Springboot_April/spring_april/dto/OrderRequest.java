@@ -5,7 +5,6 @@ import java.util.List;
 public record OrderRequest(
     Long tableId,
     Long staffId,
-    Long staffShiftId,
     List<OrderItemRequest> items
 ) {
     public record OrderItemRequest(

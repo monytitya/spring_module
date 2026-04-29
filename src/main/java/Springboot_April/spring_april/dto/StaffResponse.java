@@ -7,11 +7,13 @@ import java.time.LocalDateTime;
 
 @Builder
 public record StaffResponse(
-    Long id,
-    Long roleId,
-    String roleName,
-    String name,
-    String phone,
-    String status,
-    LocalDateTime createdAt
-) {}
+        Long id,
+        Long roleId,
+        String roleName,
+        String name,
+        String phone,
+        String email,
+        String imagePath,
+        String status,
+        LocalDateTime createdAt) {
+}

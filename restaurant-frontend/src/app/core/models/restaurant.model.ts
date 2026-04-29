@@ -1,3 +1,16 @@
+export interface Customer {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  address?: string;
+  totalOrders: number;
+  totalSpent: number;
+  lastVisit?: string;
+  createdAt: string;
+  imagePath?: string;
+}
+
 export interface Table {
   id: number;
   tableNumber: string;
@@ -10,12 +23,13 @@ export interface Staff {
   id: number;
   name: string;
   phone: string;
+  email: string;
   pinCode: string;
   status: string;
-  role: {
-    id: number;
-    name: string;
-  };
+  roleId: number;
+  roleName: string;
+  imagePath?: string;
+  createdAt?: string;
 }
 
 export interface MenuItem {
@@ -25,10 +39,8 @@ export interface MenuItem {
   price: number;
   available: boolean;
   imagePath?: string;
-  category: {
-    id: number;
-    name: string;
-  };
+  categoryId: number;
+  categoryName: string;
 }
 
 export interface OrderItem {
@@ -70,4 +82,25 @@ export interface Payment {
   totalPaidAmount?: number;
   remainingAmount?: number;
   orderStatus?: string;
+}
+
+export interface Supplier {
+  id: number;
+  name: string;
+  contactName?: string;
+  phone: string;
+  email: string;
+  address?: string;
+  category?: string;
+  status: string;
+  imagePath?: string;
+  createdAt?: string;
+}
+
+export interface Setting {
+  id?: number;
+  key: string;
+  value: string;
+  description: string;
+  group: string;
 }

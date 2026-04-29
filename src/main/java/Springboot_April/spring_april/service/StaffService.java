@@ -33,6 +33,7 @@ public class StaffService {
     private final StaffShiftRepository staffShiftRepository;
     private final StaffMapper staffMapper;
     private final StaffShiftMapper staffShiftMapper;
+    private final FileUploadService fileUploadService;
 
     public List<StaffResponse> getAllActiveStaff() {
         return staffRepository.findAll().stream()
@@ -60,17 +61,19 @@ public class StaffService {
         Staff staff = staffRepository.findById(id)
                 .filter(s -> s.getDeletedAt() == null)
                 .orElseThrow(() -> new RuntimeException("Staff not found"));
-        
+
         if (request.roleId() != null) {
             staff.setRole(roleRepository.findById(request.roleId())
                     .orElseThrow(() -> new RuntimeException("Role not found")));
         }
-        
+
         staff.setName(request.name());
         staff.setPhone(request.phone());
+        staff.setEmail(request.email());
         staff.setPinCode(request.pinCode());
         staff.setStatus(request.status());
-        
+        staff.setImagePath(request.imagePath());
+
         return staffMapper.toResponse(staffRepository.save(staff));
     }
 
@@ -83,16 +86,21 @@ public class StaffService {
         staffRepository.save(staff);
     }
 
-    public java.util.Optional<StaffResponse> loginWithPin(String pinCode) {
-        return staffRepository.findByPinCodeAndStatus(pinCode, StaffStatus.active)
-                .map(staffMapper::toResponse);
+    public java.util.Optional<StaffResponse> login(String identifier, String pinCode) {
+        if (identifier != null && identifier.contains("@")) {
+            return staffRepository.findByEmailAndPinCodeAndStatus(identifier, pinCode, StaffStatus.active)
+                    .map(staffMapper::toResponse);
+        } else {
+            return staffRepository.findByPhoneAndPinCodeAndStatus(identifier, pinCode, StaffStatus.active)
+                    .map(staffMapper::toResponse);
+        }
     }
 
     @Transactional
     public StaffShiftResponse clockIn(Long staffId, Long shiftId) {
         Staff staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new RuntimeException("Staff not found with ID: " + staffId));
-        
+
         Shift shiftEntity = shiftRepository.findById(shiftId)
                 .orElseThrow(() -> new RuntimeException("Shift not found with ID: " + shiftId));
 
@@ -103,7 +111,7 @@ public class StaffService {
                 .clockIn(LocalDateTime.now())
                 .status(ShiftStatus.ongoing)
                 .build();
-        
+
         return staffShiftMapper.toResponse(staffShiftRepository.save(staffShift));
     }
 
@@ -114,5 +122,23 @@ public class StaffService {
         shift.setClockOut(LocalDateTime.now());
         shift.setStatus(ShiftStatus.completed);
         return staffShiftMapper.toResponse(staffShiftRepository.save(shift));
+    }
+
+    @Transactional
+    public String uploadStaffImage(Long id, org.springframework.web.multipart.MultipartFile file) {
+        Staff staff = staffRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Staff not found"));
+        String imagePath = fileUploadService.storeFile(file);
+        staff.setImagePath(imagePath);
+        staffRepository.save(staff);
+        return imagePath;
+    }
+
+    @Transactional
+    public void deleteStaffImage(Long id) {
+        Staff staff = staffRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Staff not found"));
+        staff.setImagePath(null);
+        staffRepository.save(staff);
     }
 }

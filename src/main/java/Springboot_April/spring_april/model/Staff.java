@@ -30,6 +30,9 @@ public class Staff {
     @Column(unique = true, length = 20)
     private String phone;
 
+    @Column(unique = true, length = 100)
+    private String email;
+
     @Column(name = "pin_code", nullable = false, length = 6)
     private String pinCode;
 
@@ -47,4 +50,7 @@ public class Staff {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String imagePath;
 }

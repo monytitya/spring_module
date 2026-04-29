@@ -1,7 +1,9 @@
 package Springboot_April.spring_april.dto;
 
 public record CustomerRequest(
-    String name,
-    String phone,
-    String email
-) {}
+        String name,
+        String phone,
+        String email,
+        String address,
+        String imagePath) {
+}

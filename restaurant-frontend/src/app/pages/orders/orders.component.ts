@@ -260,14 +260,47 @@ export class OrdersComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadInitialData();
+  }
+
+  loadInitialData(): void {
     this.refreshData();
-    this.tableService.getTables().subscribe(t => this.tables = t);
-    this.staffService.getStaff().subscribe(s => this.staffs = s);
-    this.menuService.getMenuItems().subscribe(m => this.menuItems = m);
+    this.tableService.getTables().subscribe({
+      next: (t) => {
+        this.tables = t;
+        if (t.length > 0 && !this.newOrder.tableId) {
+          this.newOrder.tableId = t[0].id;
+        }
+      },
+      error: (err) => console.error('Error loading tables:', err)
+    });
+    this.staffService.getStaff().subscribe({
+      next: (s) => {
+        this.staffs = s;
+        if (s.length > 0 && !this.newOrder.staffId) {
+          this.newOrder.staffId = s[0].id;
+        }
+      },
+      error: (err) => console.error('Error loading staff:', err)
+    });
+    this.menuService.getMenuItems().subscribe({
+      next: (m) => {
+        this.menuItems = m;
+        if (m.length > 0 && !this.selectedMenuItemId) {
+          this.selectedMenuItemId = m[0].id;
+        }
+      },
+      error: (err) => console.error('Error loading menu items:', err)
+    });
   }
 
   refreshData(): void {
-    this.orderService.getAllOrders().subscribe(data => this.orders = data);
+    this.orderService.getAllOrders().subscribe({
+      next: (data) => {
+        this.orders = data;
+      },
+      error: (err) => console.error('Error loading orders:', err)
+    });
   }
 
   get filteredOrders() {
@@ -285,13 +318,24 @@ export class OrdersComponent implements OnInit {
   }
 
   addItem(): void {
-    if (!this.selectedMenuItemId) return;
+    if (!this.selectedMenuItemId) {
+      alert('Please select a menu item');
+      return;
+    }
+    
+    const item = this.menuItems.find(m => m.id === this.selectedMenuItemId);
+    if (!item) {
+      alert('Selected menu item not found');
+      return;
+    }
+
     this.newOrder.items.push({
-      menuItemId: +this.selectedMenuItemId,
-      quantity: this.selectedQty,
+      menuItemId: Number(this.selectedMenuItemId),
+      quantity: this.selectedQty || 1,
       notes: ''
     });
-    this.selectedMenuItemId = null;
+    
+    this.selectedMenuItemId = this.menuItems[0]?.id || null;
     this.selectedQty = 1;
   }
 
@@ -304,15 +348,47 @@ export class OrdersComponent implements OnInit {
   }
 
   submitOrder(): void {
-    this.orderService.createOrder(this.newOrder).subscribe(() => {
-      this.showCreateModal = false;
-      this.refreshData();
+    if (!this.newOrder.tableId || !this.newOrder.staffId || this.newOrder.items.length === 0) {
+      alert('Please select table, staff, and add at least one item');
+      return;
+    }
+
+    // Ensure items have the correct structure
+    const orderPayload = {
+      tableId: this.newOrder.tableId,
+      staffId: this.newOrder.staffId,
+      items: this.newOrder.items.map((item: any) => ({
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        notes: item.notes || ''
+      }))
+    };
+
+    this.orderService.createOrder(orderPayload).subscribe({
+      next: () => {
+        this.showCreateModal = false;
+        this.refreshData();
+        alert('Order created successfully!');
+      },
+      error: (err) => {
+        console.error('Error creating order:', err);
+        alert('Error creating order: ' + (err.error?.message || err.message || 'Unknown error'));
+      }
     });
   }
 
   deleteOrder(id: number): void {
     if (confirm('Are you sure you want to delete this order?')) {
-      this.orderService.deleteOrder(id).subscribe(() => this.refreshData());
+      this.orderService.deleteOrder(id).subscribe({
+        next: () => {
+          this.refreshData();
+          alert('Order deleted successfully');
+        },
+        error: (err) => {
+          console.error('Error deleting order:', err);
+          alert('Error deleting order: ' + (err.error?.message || err.message));
+        }
+      });
     }
   }
 

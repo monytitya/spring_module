@@ -5,8 +5,8 @@ import java.time.LocalTime;
 
 @Builder
 public record ShiftResponse(
-    Long id,
-    String name,
-    LocalTime startTime,
-    LocalTime endTime
-) {}
+        Long id,
+        String name,
+        LocalTime startTime,
+        LocalTime endTime) {
+}

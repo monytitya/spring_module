@@ -19,11 +19,12 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
+    private final Springboot_April.spring_april.repository.OrderRepository orderRepository;
 
     public List<CustomerResponse> getAllActiveCustomers() {
         return customerRepository.findAll().stream()
                 .filter(c -> c.getDeletedAt() == null)
-                .map(customerMapper::toResponse)
+                .map(this::mapToLoyaltyResponse)
                 .toList();
     }
 
@@ -31,7 +32,23 @@ public class CustomerService {
         Customer customer = customerRepository.findById(id)
                 .filter(c -> c.getDeletedAt() == null)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
-        return customerMapper.toResponse(customer);
+        return mapToLoyaltyResponse(customer);
+    }
+
+    private CustomerResponse mapToLoyaltyResponse(Customer customer) {
+        List<Springboot_April.spring_april.model.RestaurantOrder> orders = orderRepository.findByCustomer(customer);
+
+        long totalOrders = orders.size();
+        java.math.BigDecimal totalSpent = orders.stream()
+                .map(Springboot_April.spring_april.model.RestaurantOrder::getFinalAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+        java.time.LocalDateTime lastVisit = orders.stream()
+                .map(Springboot_April.spring_april.model.RestaurantOrder::getCreatedAt)
+                .max(java.time.LocalDateTime::compareTo)
+                .orElse(null);
+
+        return customerMapper.toResponse(customer, totalOrders, totalSpent, lastVisit);
     }
 
     @Transactional
@@ -45,11 +62,13 @@ public class CustomerService {
         Customer customer = customerRepository.findById(id)
                 .filter(c -> c.getDeletedAt() == null)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
-        
+
         customer.setName(request.name());
         customer.setPhone(request.phone());
         customer.setEmail(request.email());
-        
+        customer.setAddress(request.address());
+        customer.setImagePath(request.imagePath());
+
         return customerMapper.toResponse(customerRepository.save(customer));
     }
 

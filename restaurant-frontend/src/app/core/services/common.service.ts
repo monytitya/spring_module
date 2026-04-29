@@ -1,7 +1,48 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { MenuItem, Table, Staff } from '../models/restaurant.model';
+import { MenuItem, Table, Staff, Customer, Supplier } from '../models/restaurant.model';
+
+// ... (existing services)
+
+@Injectable({
+  providedIn: 'root'
+})
+export class SupplierService {
+  private apiUrl = 'http://localhost:9009/api/suppliers';
+
+  constructor(private http: HttpClient) {}
+
+  getSuppliers(): Observable<Supplier[]> {
+    return this.http.get<Supplier[]>(this.apiUrl);
+  }
+
+  getSupplierById(id: number): Observable<Supplier> {
+    return this.http.get<Supplier>(`${this.apiUrl}/${id}`);
+  }
+
+  createSupplier(supplier: any): Observable<Supplier> {
+    return this.http.post<Supplier>(this.apiUrl, supplier);
+  }
+
+  updateSupplier(id: number, supplier: any): Observable<Supplier> {
+    return this.http.put<Supplier>(`${this.apiUrl}/${id}`, supplier);
+  }
+
+  deleteSupplier(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  uploadSupplierImage(id: number, file: File): Observable<Supplier> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<Supplier>(`${this.apiUrl}/${id}/image`, formData);
+  }
+
+  deleteSupplierImage(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}/image`);
+  }
+}
 
 @Injectable({
   providedIn: 'root'
@@ -84,6 +125,28 @@ export class StaffService {
   getStaffById(id: number): Observable<Staff> {
     return this.http.get<Staff>(`${this.apiUrl}/${id}`);
   }
+
+  createStaff(staff: any): Observable<Staff> {
+    return this.http.post<Staff>(this.apiUrl, staff);
+  }
+
+  updateStaff(id: number, staff: any): Observable<Staff> {
+    return this.http.put<Staff>(`${this.apiUrl}/${id}`, staff);
+  }
+
+  deleteStaff(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  uploadStaffImage(id: number, file: File): Observable<Staff> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<Staff>(`${this.apiUrl}/${id}/image`, formData);
+  }
+
+  deleteStaffImage(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}/image`);
+  }
 }
 
 @Injectable({
@@ -104,5 +167,34 @@ export class RoleService {
 
   createRole(role: any): Observable<any> {
     return this.http.post<any>(this.apiUrl, role);
+  }
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CustomerService {
+  private apiUrl = 'http://localhost:9009/api/customers';
+
+  constructor(private http: HttpClient) {}
+
+  getCustomers(): Observable<Customer[]> {
+    return this.http.get<Customer[]>(this.apiUrl);
+  }
+
+  getCustomerById(id: number): Observable<Customer> {
+    return this.http.get<Customer>(`${this.apiUrl}/${id}`);
+  }
+
+  createCustomer(customer: any): Observable<Customer> {
+    return this.http.post<Customer>(this.apiUrl, customer);
+  }
+
+  updateCustomer(id: number, customer: any): Observable<Customer> {
+    return this.http.put<Customer>(`${this.apiUrl}/${id}`, customer);
+  }
+
+  deleteCustomer(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

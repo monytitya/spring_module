@@ -14,4 +14,5 @@ public interface OrderRepository extends JpaRepository<RestaurantOrder, Long> {
 
     List<RestaurantOrder> findByTableIdAndStatusIn(Long tableId, List<OrderStatus> statuses);
     List<RestaurantOrder> findByTable(Springboot_April.spring_april.model.RestaurantTable table);
+    List<RestaurantOrder> findByCustomer(Springboot_April.spring_april.model.Customer customer);
 }

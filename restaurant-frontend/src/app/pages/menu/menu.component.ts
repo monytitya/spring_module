@@ -26,39 +26,43 @@ import { MenuItem } from '../../core/models/restaurant.model';
     <!-- Menu Grid -->
     <div class="menu-grid">
       <div class="menu-item-card" *ngFor="let item of menuItems">
-        <div class="status-indicator" [class.available]="item.available"></div>
         <div class="item-header">
-          <img [src]="item.imagePath ? 'http://localhost:9009' + item.imagePath : 'assets/placeholder-food.jpg'" 
+          <img [src]="getImageUrl(item.imagePath)" 
                [alt]="item.name"
                onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
-          <div class="category-badge">
-            {{ item.category.name }}
+          
+          <div class="header-overlay">
+            <div class="status-dot" [class.available]="item.available"></div>
+            <div class="price-badge">\$ {{ item.price }}</div>
+            <div class="category-tag">{{ item.categoryName }}</div>
           </div>
-          <div class="card-initials" *ngIf="!item.imagePath">{{ item.name | slice:0:2 | uppercase }}</div>
         </div>
         
         <div class="item-body">
-          <div class="title-row">
-            <h3 class="item-name">{{ item.name }}</h3>
-            <span class="price">\$ {{ item.price }}</span>
-          </div>
-          <p class="description">{{ item.description }}</p>
-          
-          <div class="item-footer">
-            <div class="actions">
-              <button class="action-btn edit" (click)="openEditModal(item)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-              </button>
-              <button class="action-btn delete" (click)="deleteItem(item.id)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-              </button>
+          <div class="item-info">
+            <div class="title-row">
+              <h3 class="item-name">{{ item.name }}</h3>
+              <div class="rating">
+                <span class="star">★</span>
+                <span>4.8</span>
+              </div>
             </div>
+            <p class="description">{{ item.description }}</p>
+          </div>
+          
+          <div class="item-actions">
+            <button class="action-btn edit" (click)="openEditModal(item)" title="Edit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            <button class="action-btn delete" (click)="deleteItem(item.id)" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal (Remains same structure but uses refined styles) -->
     <div class="modal-backdrop" *ngIf="showModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -136,114 +140,141 @@ import { MenuItem } from '../../core/models/restaurant.model';
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .page-header { display: flex; justify-content: space-between; align-items: center; }
-    .header-info h1 { font-size: 1.85rem; font-weight: 800; color: #111827; margin: 0; }
-    .header-info .subtitle { color: #6B7280; font-size: 0.95rem; margin-top: 0.25rem; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .header-info h1 { font-size: 2.2rem; font-weight: 800; color: #111827; margin: 0; letter-spacing: -0.02em; }
+    .header-info .subtitle { color: #6B7280; font-size: 1rem; margin-top: 0.4rem; }
 
     .btn-primary {
       background: #FF7043;
       color: white;
       border: none;
-      padding: 0.75rem 1.5rem;
-      min-width: 140px;
-      min-height: 48px;
-      border-radius: 12px;
-      font-weight: 600;
+      padding: 0 1.5rem;
+      height: 48px;
+      border-radius: 14px;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 0.6rem;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(255, 112, 67, 0.2);
-      transition: all 0.2s;
+      box-shadow: 0 8px 16px rgba(255, 112, 67, 0.25);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 112, 67, 0.3); }
-    .btn-primary:disabled {
-      background: #D1D5DB;
-      cursor: not-allowed;
-      box-shadow: none;
-      opacity: 0.7;
-    }
-    .btn-primary svg { width: 18px; height: 18px; }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 20px rgba(255, 112, 67, 0.35); }
+    .btn-primary:active { transform: translateY(-1px); }
 
     .menu-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 2.5rem;
     }
 
     .menu-item-card {
-      padding: 0;
+      background: white;
+      border-radius: 28px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
       position: relative;
-      border: 1px solid #E5E7EB;
-      border-radius: 20px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .menu-item-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+    .menu-item-card:hover { transform: translateY(-12px); box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.12); }
 
-    .status-indicator {
+    .item-header {
+      height: 240px;
+      margin: 12px;
+      border-radius: 22px;
+      position: relative;
+      overflow: hidden;
+      background: #F3F4F6;
+    }
+    .item-header img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    .menu-item-card:hover .item-header img { transform: scale(1.1); }
+
+    .header-overlay {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, transparent 40%, rgba(0,0,0,0.4) 100%);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .status-dot {
       width: 12px;
       height: 12px;
-      border-radius: 50%;
       background: #D1D5DB;
-      z-index: 10;
+      border-radius: 50%;
       border: 2px solid white;
+      align-self: flex-end;
     }
-    .status-indicator.available { background: #10B981; }
+    .status-dot.available { background: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
 
-    .item-header { position: relative; height: 200px; }
-    .item-header img { width: 100%; height: 100%; object-fit: cover; }
-
-    .category-badge {
+    .price-badge {
       position: absolute;
-      bottom: 12px;
-      left: 12px;
-      background: rgba(255, 112, 67, 0.95);
-      backdrop-filter: blur(4px);
+      top: 1rem;
+      left: 1rem;
+      background: white;
+      color: #111827;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .category-tag {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       color: white;
-      padding: 4px 14px;
+      padding: 6px 14px;
       border-radius: 10px;
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
+      align-self: flex-start;
+      border: 1px solid rgba(255,255,255,0.3);
     }
 
-    .item-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
-    .title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-    .item-body h3 { font-size: 1.15rem; font-weight: 700; color: #111827; margin: 0; }
-    .price { font-weight: 800; font-size: 1.25rem; color: #FF7043; }
+    .item-body { padding: 0.5rem 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    
+    .item-info { display: flex; flex-direction: column; gap: 0.5rem; }
+    .title-row { display: flex; justify-content: space-between; align-items: center; }
+    .item-name { font-size: 1.35rem; font-weight: 800; color: #111827; margin: 0; letter-spacing: -0.01em; }
+    
+    .rating { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: #F59E0B; font-size: 0.9rem; }
+    .star { font-size: 1.1rem; }
 
-    .description { font-size: 0.9rem; color: #6B7280; line-height: 1.5; height: 2.7rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .description { font-size: 0.95rem; color: #6B7280; line-height: 1.6; height: 3rem; overflow: hidden; margin: 0; }
 
-    .item-footer { margin-top: 0.5rem; }
-    .actions { display: flex; gap: 0.75rem; }
-
+    .item-actions { display: flex; gap: 1rem; margin-top: 0.5rem; }
+    
     .action-btn {
       flex: 1;
-      height: 40px;
-      border-radius: 10px;
-      border: 1px solid #E5E7EB;
-      background: white;
+      height: 48px;
+      border-radius: 16px;
+      border: 1px solid #F3F4F6;
+      background: #F9FAFB;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s;
+      color: #4B5563;
     }
-    .action-btn svg { width: 18px; height: 18px; }
-    .action-btn.edit:hover { background: #F3F4F6; color: #111827; }
+    .action-btn svg { width: 20px; height: 20px; }
+    .action-btn.edit:hover { background: #EEF2FF; color: #4F46E5; border-color: #E0E7FF; }
     .action-btn.delete:hover { background: #FEF2F2; color: #EF4444; border-color: #FEE2E2; }
 
     /* Modal Styles */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
+      background: rgba(17, 24, 39, 0.4);
+      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -253,86 +284,78 @@ import { MenuItem } from '../../core/models/restaurant.model';
 
     .modal-content {
       background: white;
-      border-radius: 24px;
+      border-radius: 32px;
       width: 100%;
-      max-width: 600px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      max-width: 640px;
+      box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.25);
       overflow: hidden;
-      animation: modalSlide 0.3s ease-out;
+      animation: modalSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @keyframes modalSlide {
-      from { opacity: 0; transform: scale(0.95) translateY(20px); }
+      from { opacity: 0; transform: scale(0.9) translateY(40px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center; }
-    .modal-header h2 { font-size: 1.5rem; font-weight: 800; margin: 0; }
-    .close-btn { background: none; border: none; font-size: 2rem; color: #9CA3AF; cursor: pointer; }
+    .modal-header { padding: 2rem 2.5rem; border-bottom: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 1.75rem; font-weight: 800; margin: 0; color: #111827; }
+    .close-btn { background: #F3F4F6; border: none; width: 40px; height: 40px; border-radius: 12px; font-size: 1.5rem; color: #6B7280; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .close-btn:hover { background: #E5E7EB; color: #111827; }
 
-    .modal-body { padding: 2rem; max-height: 70vh; overflow-y: auto; }
+    .modal-body { padding: 2.5rem; max-height: 75vh; overflow-y: auto; }
     
-    .image-upload-section { margin-bottom: 2rem; display: flex; justify-content: center; }
+    .image-upload-section { margin-bottom: 2.5rem; }
     .image-preview {
       width: 100%;
-      height: 200px;
+      height: 240px;
       background: #F9FAFB;
-      border: 2px dashed #D1D5DB;
-      border-radius: 16px;
+      border: 3px dashed #E5E7EB;
+      border-radius: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       overflow: hidden;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
     }
-    .image-preview:hover { 
-      border-color: #FF7043; 
-      background: #FFF7F5;
-      transform: scale(1.01);
-    }
+    .image-preview:hover { border-color: #FF7043; background: #FFF7F5; }
     .image-preview img { width: 100%; height: 100%; object-fit: cover; }
     
     .image-preview::after {
-      content: 'Click to Change';
+      content: 'Change Image';
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.3);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 600;
+      font-weight: 700;
+      font-size: 1.1rem;
       opacity: 0;
       transition: opacity 0.2s;
     }
     .image-preview:hover img + .image-preview::after { opacity: 1; }
     
-    .upload-placeholder { 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      gap: 0.75rem; 
-      color: #9CA3AF;
-      pointer-events: none;
-    }
-    .upload-placeholder svg { width: 32px; height: 32px; }
-    .upload-placeholder span { font-size: 0.9rem; font-weight: 500; }
+    .upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 1rem; color: #9CA3AF; }
+    .upload-placeholder svg { width: 48px; height: 48px; stroke-width: 1.5; }
+    .upload-placeholder span { font-size: 1rem; font-weight: 600; }
 
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.6rem; }
     .form-group.full { grid-column: span 2; }
-    .form-group label { font-size: 0.9rem; font-weight: 600; color: #374151; }
+    .form-group label { font-size: 0.95rem; font-weight: 700; color: #374151; }
     
     .form-group input, .form-group select, .form-group textarea {
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      border: 1px solid #E5E7EB;
+      padding: 0.9rem 1.25rem;
+      border-radius: 16px;
+      border: 2px solid #F3F4F6;
       background: #F9FAFB;
       font-family: inherit;
-      font-size: 0.95rem;
+      font-size: 1rem;
       transition: all 0.2s;
+      color: #111827;
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       outline: none;
@@ -341,21 +364,14 @@ import { MenuItem } from '../../core/models/restaurant.model';
       box-shadow: 0 0 0 4px rgba(255, 112, 67, 0.1);
     }
 
-    .checkbox-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
-    .checkbox-label input { width: 20px; height: 20px; border-radius: 6px; cursor: pointer; }
+    .checkbox-label { display: flex; align-items: center; gap: 0.8rem; cursor: pointer; font-weight: 700; font-size: 1rem; color: #374151; }
+    .checkbox-label input { width: 22px; height: 22px; border-radius: 7px; cursor: pointer; accent-color: #FF7043; }
 
-    .modal-footer { padding: 1.5rem 2rem; background: #F9FAFB; display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }
-    .btn-ghost { background: none; border: 1px solid #E5E7EB; padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; cursor: pointer; }
-    .btn-ghost:hover { background: #F3F4F6; }
+    .modal-footer { padding: 2rem 2.5rem; background: #F9FAFB; display: flex; justify-content: flex-end; align-items: center; gap: 1.25rem; }
+    .btn-ghost { background: white; border: 2px solid #F3F4F6; height: 52px; padding: 0 2rem; border-radius: 16px; font-weight: 700; cursor: pointer; color: #6B7280; transition: all 0.2s; }
+    .btn-ghost:hover { background: #F3F4F6; color: #111827; }
 
-    .validation-hint {
-      display: flex;
-      gap: 0.75rem;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #EF4444;
-      margin-right: auto;
-    }
+    .validation-hint { display: flex; gap: 1rem; font-size: 0.85rem; font-weight: 700; color: #EF4444; margin-right: auto; }
   `]
 })
 export class MenuComponent implements OnInit {
@@ -392,6 +408,12 @@ export class MenuComponent implements OnInit {
     });
   }
 
+  getImageUrl(imagePath: string | null | undefined): string {
+    if (!imagePath) return 'assets/placeholder-food.jpg';
+    if (imagePath.startsWith('http')) return imagePath;
+    return 'http://localhost:9009' + imagePath;
+  }
+
   openAddModal(): void {
     this.editId = null;
     this.resetForm();
@@ -408,7 +430,7 @@ export class MenuComponent implements OnInit {
       description: item.description,
       price: item.price,
       available: item.available,
-      categoryId: item.category.id
+      categoryId: item.categoryId
     };
     this.previewUrl = item.imagePath ? 'http://localhost:9009' + item.imagePath : null;
     this.showModal = true;

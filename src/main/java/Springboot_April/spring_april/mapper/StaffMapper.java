@@ -10,27 +10,33 @@ import org.springframework.stereotype.Component;
 public class StaffMapper {
 
     public Staff toEntity(StaffRequest request, Role role) {
-        if (request == null) return null;
-        
+        if (request == null)
+            return null;
+
         return Staff.builder()
                 .role(role)
                 .name(request.name())
                 .phone(request.phone())
+                .email(request.email())
                 .pinCode(request.pinCode())
                 .status(request.status())
+                .imagePath(request.imagePath())
                 .build();
     }
 
     public StaffResponse toResponse(Staff staff) {
-        if (staff == null) return null;
+        if (staff == null)
+            return null;
 
         return StaffResponse.builder()
                 .id(staff.getId())
                 .roleId(staff.getRole() != null ? staff.getRole().getId() : null)
-                .roleName(staff.getRole() != null ? staff.getRole().getName() : null)
+                .roleName(staff.getRole() != null ? staff.getRole().getName() : "No Role")
                 .name(staff.getName())
                 .phone(staff.getPhone())
-                .status(staff.getStatus().name())
+                .email(staff.getEmail())
+                .imagePath(staff.getImagePath())
+                .status(staff.getStatus() != null ? staff.getStatus().name() : "unknown")
                 .createdAt(staff.getCreatedAt())
                 .build();
     }

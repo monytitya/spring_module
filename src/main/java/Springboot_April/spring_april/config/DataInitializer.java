@@ -46,14 +46,18 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        cleanupJunkData();
-        seedRoles();
-        seedShifts();
-        seedTables();
-        seedStaff();
-        seedCustomers();
-        seedMenu();
-        seedOrders();
+        try {
+            cleanupJunkData();
+            seedRoles();
+            seedShifts();
+            seedTables();
+            seedStaff();
+            seedCustomers();
+            seedMenu();
+            seedOrders();
+        } catch (Exception e) {
+            System.err.println("Error during Data Initialization: " + e.getMessage());
+        }
     }
 
     private void cleanupJunkData() {
@@ -120,23 +124,24 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedStaff() {
-        if (staffRepository.count() < 3) {
+        long activeCount = staffRepository.findAll().stream().filter(s -> s.getDeletedAt() == null).count();
+        if (activeCount < 3) {
             List<Role> roles = roleRepository.findAll();
             if (!roles.isEmpty()) {
                 Role adminRole   = roles.stream().filter(r -> r.getName().equals("ADMIN")).findFirst().orElse(roles.get(0));
                 Role managerRole = roles.stream().filter(r -> r.getName().equals("MANAGER")).findFirst().orElse(roles.get(0));
                 Role staffRole   = roles.stream().filter(r -> r.getName().equals("STAFF")).findFirst().orElse(roles.get(0));
 
-                if (staffRepository.findAll().stream().noneMatch(s -> s.getName().equals("Admin User"))) {
-                    staffRepository.save(Staff.builder().name("Admin User").phone("1234567890")
+                if (staffRepository.findAll().stream().noneMatch(s -> "1234567890".equals(s.getPhone()))) {
+                    staffRepository.save(Staff.builder().name("Admin User").phone("1234567890").email("admin@example.com")
                             .pinCode("1234").status(StaffStatus.active).role(adminRole).build());
                 }
-                if (staffRepository.findAll().stream().noneMatch(s -> s.getName().equals("Manager Sam"))) {
-                    staffRepository.save(Staff.builder().name("Manager Sam").phone("0987654321")
+                if (staffRepository.findAll().stream().noneMatch(s -> "0987654321".equals(s.getPhone()))) {
+                    staffRepository.save(Staff.builder().name("Manager Sam").phone("0987654321").email("manager@example.com")
                             .pinCode("5678").status(StaffStatus.active).role(managerRole).build());
                 }
-                if (staffRepository.findAll().stream().noneMatch(s -> s.getName().equals("Waiter Kim"))) {
-                    staffRepository.save(Staff.builder().name("Waiter Kim").phone("0112233445")
+                if (staffRepository.findAll().stream().noneMatch(s -> "0112233445".equals(s.getPhone()))) {
+                    staffRepository.save(Staff.builder().name("Waiter Kim").phone("0112233445").email("waiter@example.com")
                             .pinCode("0000").status(StaffStatus.active).role(staffRole).build());
                 }
                 System.out.println("Staff healing seeding complete.");
@@ -157,65 +162,13 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedMenu() {
-        if (menuCategoryRepository.count() == 0) {
-
-            // ── Categories ──────────────────────────────────────────
-            MenuCategory beverages = menuCategoryRepository.save(
-                    MenuCategory.builder().name("Beverages").sortOrder(1).build());
-
-            MenuCategory starters = menuCategoryRepository.save(
-                    MenuCategory.builder().name("Starters").sortOrder(2).build());
-
-            MenuCategory mainCourse = menuCategoryRepository.save(
-                    MenuCategory.builder().name("Main Course").sortOrder(3).build());
-
-            MenuCategory desserts = menuCategoryRepository.save(
-                    MenuCategory.builder().name("Desserts").sortOrder(4).build());
-
-            // ── Beverages ────────────────────────────────────────────
-            menuItemRepository.saveAll(Arrays.asList(
-                    MenuItem.builder().category(beverages).name("Coca Cola")
-                            .description("Cold and refreshing soda").price(new java.math.BigDecimal("1.50")).available(true).build(),
-                    MenuItem.builder().category(beverages).name("Orange Juice")
-                            .description("Freshly squeezed orange juice").price(new java.math.BigDecimal("2.50")).available(true).build(),
-                    MenuItem.builder().category(beverages).name("Iced Coffee")
-                            .description("Cold brew with milk").price(new java.math.BigDecimal("3.00")).available(true).build(),
-                    MenuItem.builder().category(beverages).name("Mineral Water")
-                            .description("Still mineral water 500ml").price(new java.math.BigDecimal("1.00")).available(true).build()
-            ));
-
-            // ── Starters ─────────────────────────────────────────────
-            menuItemRepository.saveAll(Arrays.asList(
-                    MenuItem.builder().category(starters).name("Spring Rolls")
-                            .description("Crispy vegetable spring rolls (4 pcs)").price(new java.math.BigDecimal("4.50")).available(true).build(),
-                    MenuItem.builder().category(starters).name("Chicken Wings")
-                            .description("Spicy buffalo chicken wings (6 pcs)").price(new java.math.BigDecimal("6.00")).available(true).build(),
-                    MenuItem.builder().category(starters).name("Caesar Salad")
-                            .description("Romaine, croutons, parmesan").price(new java.math.BigDecimal("5.50")).available(true).build()
-            ));
-
-            // ── Main Course ───────────────────────────────────────────
-            menuItemRepository.saveAll(Arrays.asList(
-                    MenuItem.builder().category(mainCourse).name("Grilled Salmon")
-                            .description("Served with lemon butter and vegetables").price(new java.math.BigDecimal("14.00")).available(true).build(),
-                    MenuItem.builder().category(mainCourse).name("Beef Steak")
-                            .description("250g sirloin with fries and sauce").price(new java.math.BigDecimal("18.00")).available(true).build(),
-                    MenuItem.builder().category(mainCourse).name("Chicken Rice")
-                            .description("Steamed chicken over jasmine rice").price(new java.math.BigDecimal("8.50")).available(true).build(),
-                    MenuItem.builder().category(mainCourse).name("Vegetarian Pasta")
-                            .description("Penne with tomato basil sauce").price(new java.math.BigDecimal("9.00")).available(true).build()
-            ));
-
-            // ── Desserts ──────────────────────────────────────────────
-            menuItemRepository.saveAll(Arrays.asList(
-                    MenuItem.builder().category(desserts).name("Chocolate Lava Cake")
-                            .description("Warm cake with vanilla ice cream").price(new java.math.BigDecimal("5.00")).available(true).build(),
-                    MenuItem.builder().category(desserts).name("Mango Sticky Rice")
-                            .description("Thai style with coconut milk").price(new java.math.BigDecimal("4.00")).available(true).build()
-            ));
-
-            System.out.println("Menu categories and items seeded successfully (4 categories, 13 items).");
+        // Commented out to prioritize "Old Menu" recovery
+        /*
+        long activeCount = menuItemRepository.findAll().stream().filter(i -> i.getDeletedAt() == null).count();
+        if (activeCount == 0) {
+            // ... (Seeding code)
         }
+        */
     }
 
     private void seedOrders() {

@@ -38,10 +38,10 @@ public class OrderMapper {
         return OrderResponse.builder()
                 .id(order.getId())
                 .tableId(order.getTable() != null ? order.getTable().getId() : null)
-                .tableName(order.getTable() != null ? order.getTable().getTableNumber() : null)
+                .tableName(order.getTable() != null ? order.getTable().getTableNumber() : "N/A")
                 .staffId(order.getStaff() != null ? order.getStaff().getId() : null)
-                .staffName(order.getStaff() != null ? order.getStaff().getName() : null)
-                .status(order.getStatus().name())
+                .staffName(order.getStaff() != null ? order.getStaff().getName() : "Unknown")
+                .status(order.getStatus() != null ? order.getStatus().name() : "unknown")
                 .totalAmount(safeAmount(order.getTotalAmount()))
                 .discountAmount(safeAmount(order.getDiscountAmount()))
                 .finalAmount(finalAmt)
@@ -61,12 +61,12 @@ public class OrderMapper {
         return OrderResponse.OrderItemResponse.builder()
                 .id(item.getId())
                 .menuItemId(item.getMenuItem() != null ? item.getMenuItem().getId() : null)
-                .menuItemName(item.getMenuItem() != null ? item.getMenuItem().getName() : null)
+                .menuItemName(item.getMenuItem() != null ? item.getMenuItem().getName() : "Deleted Item")
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
                 .subtotalAmount(item.getSubtotalAmount())
                 .note(item.getNote())
-                .kitchenStatus(item.getKitchenStatus().name())
+                .kitchenStatus(item.getKitchenStatus() != null ? item.getKitchenStatus().name() : "unknown")
                 .build();
     }
 

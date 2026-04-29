@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
+import { RoleService } from '../../../core/services/common.service';
 
 @Component({
   selector: 'app-register',
@@ -45,16 +47,30 @@ import { FormsModule } from '@angular/forms';
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="pin">PIN Code (4 digits)</label>
-            <div class="input-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              <input type="password" id="pin" name="pin" [(ngModel)]="regData.pin" placeholder="••••" maxlength="4" required>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pin">PIN Code (4 digits)</label>
+              <div class="input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <input type="password" id="pin" name="pin" [(ngModel)]="regData.pinCode" placeholder="••••" maxlength="4" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="role">Assign Role</label>
+              <div class="input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <select id="role" name="roleId" [(ngModel)]="regData.roleId" required>
+                  <option value="" disabled selected>Select Role</option>
+                  <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <button type="submit" class="submit-btn" [disabled]="!registerForm.valid">
-            Create Account
+          <div class="error-message" *ngIf="error">{{ error }}</div>
+
+          <button type="submit" class="submit-btn" [disabled]="!registerForm.valid || isLoading">
+            {{ isLoading ? 'Creating Account...' : 'Create Account' }}
           </button>
         </form>
 
@@ -81,138 +97,78 @@ import { FormsModule } from '@angular/forms';
   `,
   styles: [`
     .auth-container { display: flex; min-height: 100vh; background: white; }
-
-    .auth-card {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 4rem;
-      max-width: 650px;
-      margin: 0 auto;
-    }
-
+    .auth-card { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 4rem; max-width: 650px; margin: 0 auto; }
     .auth-header { margin-bottom: 2.5rem; }
-    
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 2rem;
-    }
-
-    .logo-circle {
-      background: linear-gradient(135deg, #FF9E6F 0%, #FF6635 100%);
-      color: white;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.4rem;
-    }
-
+    .logo { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
+    .logo-circle { background: linear-gradient(135deg, #FF9E6F 0%, #FF6635 100%); color: white; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.4rem; }
     .logo-text { font-size: 1.6rem; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
     .dot { color: #FF6635; }
-
     .auth-header h1 { font-size: 2.25rem; font-weight: 800; color: #111827; margin-bottom: 0.5rem; }
     .auth-header .subtitle { color: #6B7280; font-size: 1.1rem; }
-
     .auth-form { display: flex; flex-direction: column; gap: 1.25rem; }
-
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
     .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
     .form-group label { font-weight: 600; font-size: 0.95rem; color: #374151; }
-
-    .input-wrap {
-      display: flex;
-      align-items: center;
-      background: #F9FAFB;
-      border: 1px solid #E5E7EB;
-      border-radius: 14px;
-      padding: 0.85rem 1.25rem;
-      transition: all 0.2s;
-    }
-
-    .input-wrap:focus-within {
-      background: white;
-      border-color: #FF6635;
-      box-shadow: 0 0 0 4px rgba(255, 102, 53, 0.1);
-    }
-
+    .input-wrap { display: flex; align-items: center; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 14px; padding: 0.85rem 1.25rem; transition: all 0.2s; }
+    .input-wrap:focus-within { background: white; border-color: #FF6635; box-shadow: 0 0 0 4px rgba(255, 102, 53, 0.1); }
     .input-wrap svg { width: 18px; height: 18px; color: #9CA3AF; margin-right: 1rem; }
-    .input-wrap input { border: none; background: transparent; outline: none; width: 100%; font-size: 1rem; color: #111827; }
-
-    .submit-btn {
-      background: #111827;
-      color: white;
-      border: none;
-      padding: 1rem;
-      border-radius: 14px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      cursor: pointer;
-      margin-top: 1rem;
-      transition: all 0.2s;
-    }
-
+    .input-wrap input, .input-wrap select { border: none; background: transparent; outline: none; width: 100%; font-size: 1rem; color: #111827; }
+    .error-message { color: #EF4444; font-size: 0.9rem; font-weight: 600; }
+    .submit-btn { background: #111827; color: white; border: none; padding: 1rem; border-radius: 14px; font-weight: 700; font-size: 1.1rem; cursor: pointer; margin-top: 1rem; transition: all 0.2s; }
     .submit-btn:hover:not(:disabled) { background: #1F2937; transform: translateY(-2px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
     .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
     .auth-bottom { margin-top: 2rem; text-align: center; color: #6B7280; font-size: 0.95rem; }
     .auth-bottom a { color: #FF6635; font-weight: 700; text-decoration: none; }
-
-    .auth-visual {
-      flex: 1;
-      background: #F3F4F6 url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000') no-repeat center center;
-      background-size: cover;
-      display: flex;
-      align-items: flex-end;
-      padding: 4rem;
-      position: relative;
-    }
-
-    .auth-visual::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
-    }
-
+    .auth-visual { flex: 1; background: #F3F4F6 url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000') no-repeat center center; background-size: cover; display: flex; align-items: flex-end; padding: 4rem; position: relative; }
+    .auth-visual::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%); }
     .visual-content { position: relative; z-index: 1; width: 100%; }
-
-    .quote-card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(12px);
-      padding: 2rem;
-      border-radius: 24px;
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
+    .quote-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); padding: 2rem; border-radius: 24px; color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
     .quote-card p { font-size: 1.5rem; font-weight: 500; font-style: italic; line-height: 1.4; margin-bottom: 1.5rem; }
-    
     .author { display: flex; align-items: center; gap: 1rem; }
     .avatar { width: 48px; height: 48px; background: #FF6635; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
     .author .name { font-weight: 700; margin: 0; }
     .author .role { font-size: 0.85rem; opacity: 0.7; margin: 0; }
-
-    @media (max-width: 1024px) {
-      .auth-visual { display: none; }
-      .auth-card { max-width: 100%; }
-    }
+    @media (max-width: 1024px) { .auth-visual { display: none; } .auth-card { max-width: 100%; } }
   `]
 })
-export class RegisterComponent {
-  regData = { name: '', phone: '', email: '', pin: '' };
+export class RegisterComponent implements OnInit {
+  regData = { name: '', phone: '', email: '', pinCode: '', roleId: '', status: 'active' };
+  roles: any[] = [];
+  isLoading = false;
+  error = '';
 
-  constructor(private router: Router) {}
+  constructor(
+    private authService: AuthService, 
+    private roleService: RoleService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.roleService.getRoles().subscribe({
+      next: (data) => {
+        this.roles = data;
+        console.log('Fetched roles:', data);
+      },
+      error: (err) => {
+        console.error('Error fetching roles:', err);
+        this.error = 'Failed to load roles. Please refresh the page.';
+      }
+    });
+  }
 
   onRegister(): void {
-    // Demo navigation
-    this.router.navigate(['/login']);
+    this.isLoading = true;
+    this.error = '';
+    
+    this.authService.register(this.regData).subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.error = 'Registration failed. Please check your details.';
+        console.error(err);
+      }
+    });
   }
 }

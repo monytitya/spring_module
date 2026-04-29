@@ -45,11 +45,11 @@ public class MenuMapper {
         return MenuItemResponse.builder()
                 .id(entity.getId())
                 .categoryId(entity.getCategory() != null ? entity.getCategory().getId() : null)
-                .categoryName(entity.getCategory() != null ? entity.getCategory().getName() : null)
+                .categoryName(entity.getCategory() != null ? entity.getCategory().getName() : "Uncategorized")
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .price(entity.getPrice())
-                .available(entity.getAvailable())
+                .available(entity.getAvailable() != null ? entity.getAvailable() : false)
                 .imagePath(entity.getImagePath())
                 .build();
     }

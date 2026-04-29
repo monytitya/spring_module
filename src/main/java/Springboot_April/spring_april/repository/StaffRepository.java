@@ -8,5 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface StaffRepository extends JpaRepository<Staff, Long> {
-    Optional<Staff> findByPinCodeAndStatus(String pinCode, Springboot_April.spring_april.enums.StaffStatus status);
+    Optional<Staff> findFirstByPinCodeAndStatus(String pinCode, Springboot_April.spring_april.enums.StaffStatus status);
+    Optional<Staff> findByPhoneAndPinCodeAndStatus(String phone, String pinCode, Springboot_April.spring_april.enums.StaffStatus status);
+    Optional<Staff> findByEmailAndPinCodeAndStatus(String email, String pinCode, Springboot_April.spring_april.enums.StaffStatus status);
 }

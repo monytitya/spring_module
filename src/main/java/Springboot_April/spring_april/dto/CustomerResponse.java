@@ -5,10 +5,14 @@ import java.time.LocalDateTime;
 
 @Builder
 public record CustomerResponse(
-    Long id,
-    String name,
-    String email,
-    String phone,
-    String address,
-    LocalDateTime createdAt
-) {}
+        Long id,
+        String name,
+        String email,
+        String phone,
+        String address,
+        String imagePath,
+        Long totalOrders,
+        java.math.BigDecimal totalSpent,
+        LocalDateTime lastVisit,
+        LocalDateTime createdAt) {
+}

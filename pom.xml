@@ -8,7 +8,7 @@
         <version>4.0.5</version>
         <relativePath/> 
     </parent>
-    <groupId>Springboot_April </groupId>
+    <groupId>Springboot_April</groupId>
     <artifactId>spring_april</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name/>
@@ -81,6 +81,20 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Bakong KHQR SDK -->
+        <dependency>
+            <groupId>kh.gov.nbc.bakong_khqr</groupId>
+            <artifactId>sdk-java</artifactId>
+            <version>1.0.0.17</version>
+        </dependency>
+        
+        <!-- For Bank API Requests -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version>
         </dependency>
     </dependencies>
 

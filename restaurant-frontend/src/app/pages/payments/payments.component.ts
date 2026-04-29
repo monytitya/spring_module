@@ -112,7 +112,38 @@ import { Order, Payment } from '../../core/models/restaurant.model';
               <input type="text" placeholder="Transaction Ref #" [(ngModel)]="newPayment.khqrRef">
             </div>
 
-            <button class="btn-primary full-width" (click)="submitPayment()">Complete Transaction</button>
+            <button class="btn-primary full-width" (click)="submitPayment()">
+              {{ newPayment.method === 'KHQR' ? 'Generate KHQR' : 'Complete Transaction' }}
+            </button>
+          </div>
+
+          <!-- KHQR Display Modal -->
+          <div class="qr-modal-overlay" *ngIf="showQRModal">
+            <div class="qr-modal card">
+              <div class="qr-header">
+                <img src="assets/bakong-logo.png" alt="Bakong" class="bakong-logo" onerror="this.src='https://bakong.nbc.gov.kh/assets/img/bakong-logo.png'">
+                <h3>Scan to Pay</h3>
+                <button class="close-btn" (click)="showQRModal = false">×</button>
+              </div>
+              
+              <div class="qr-body">
+                <div class="qr-container">
+                  <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodedQR" alt="KHQR">
+                </div>
+                <div class="payment-info">
+                  <p class="amount">\$ {{ newPayment.amount | number:'1.2-2' }}</p>
+                  <p class="order-id">Order #{{ currentOrder?.id }}</p>
+                </div>
+              </div>
+              
+              <div class="qr-footer">
+                <div class="loader-row">
+                  <div class="spinner"></div>
+                  <span>Waiting for payment...</span>
+                </div>
+                <button class="btn-secondary full-width" (click)="showQRModal = false">Cancel</button>
+              </div>
+            </div>
           </div>
 
           <div class="card history" *ngIf="currentOrder && currentOrder.payments?.length">
@@ -239,6 +270,66 @@ import { Order, Payment } from '../../core/models/restaurant.model';
     .status-badge.open { background: #E0F2FE; color: #0369A1; }
     .status-badge.partial { background: #FEF3C7; color: #B45309; }
     .status-badge.closed { background: #DCFCE7; color: #15803D; }
+
+    /* QR Modal Styles */
+    .qr-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .qr-modal {
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      text-align: center;
+      animation: modalUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes modalUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .qr-header { display: flex; justify-content: space-between; align-items: center; }
+    .qr-header h3 { margin: 0; font-size: 1.25rem; }
+    .bakong-logo { height: 24px; }
+    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #9CA3AF; }
+
+    .qr-container {
+      background: white;
+      padding: 1rem;
+      border-radius: 20px;
+      border: 1px solid #E5E7EB;
+      margin: 1rem auto;
+      width: fit-content;
+    }
+    
+    .payment-info .amount { font-size: 2rem; font-weight: 800; color: #111827; margin: 0; }
+    .payment-info .order-id { font-size: 0.9rem; color: #6B7280; margin-top: 0.25rem; }
+
+    .loader-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      color: #6B7280;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #E5E7EB;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   `]
 })
 export class PaymentsComponent implements OnInit {
@@ -251,6 +342,9 @@ export class PaymentsComponent implements OnInit {
     amount: 0,
     khqrRef: null
   };
+
+  showQRModal = false;
+  encodedQR = '';
 
   constructor(
     private orderService: OrderService,
@@ -300,13 +394,22 @@ export class PaymentsComponent implements OnInit {
       ...this.newPayment
     };
 
-    this.paymentService.processPayment(payload).subscribe(() => {
-      alert('Payment successful!');
-      this.loadOrderDetails();
-      this.fetchActiveOrders();
-      this.newPayment = { method: 'CASH', amount: 0, khqrRef: null };
-    }, err => {
-      alert('Error processing payment: ' + (err.error?.error || 'Unknown error'));
+    this.paymentService.processPayment(payload).subscribe({
+      next: (res: any) => {
+        if (res.qrString) {
+          this.encodedQR = encodeURIComponent(res.qrString);
+          this.showQRModal = true;
+          // In a real app, you would start polling here to check if payment is done
+        } else {
+          alert('Payment successful!');
+          this.loadOrderDetails();
+          this.fetchActiveOrders();
+          this.newPayment = { method: 'CASH', amount: 0, khqrRef: null };
+        }
+      },
+      error: (err) => {
+        alert('Error processing payment: ' + (err.error?.error || 'Unknown error'));
+      }
     });
   }
 }

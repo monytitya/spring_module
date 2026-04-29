@@ -20,6 +20,7 @@ import Springboot_April.spring_april.model.RestaurantTable;
 import Springboot_April.spring_april.repository.OrderRepository;
 import Springboot_April.spring_april.repository.PaymentRepository;
 import Springboot_April.spring_april.repository.TableRepository;
+import Springboot_April.spring_april.service.gateway.BakongGatewayService;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -27,10 +28,11 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class PaymentService {
 
-    private final PaymentRepository paymentRepository;
-    private final OrderRepository   orderRepository;
-    private final TableRepository   tableRepository;
-    private final PaymentMapper     paymentMapper;
+    private final PaymentRepository     paymentRepository;
+    private final OrderRepository       orderRepository;
+    private final TableRepository       tableRepository;
+    private final PaymentMapper         paymentMapper;
+    private final BakongGatewayService  bakongService;
 
     // ────────────────────────────────────────────────────
     // READ
@@ -48,14 +50,9 @@ public class PaymentService {
         return paymentMapper.toResponse(payment);
     }
 
-    /**
-     * Returns ALL payment transactions for a given order.
-     * Useful for showing the full split-payment history on the UI.
-     */
     public List<PaymentResponse> getPaymentsByOrderId(Long orderId) {
         if (!orderRepository.existsById(orderId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Order not found with ID: " + orderId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId);
         }
         return paymentRepository.findByOrderId(orderId).stream()
                 .map(paymentMapper::toResponse)
@@ -66,18 +63,6 @@ public class PaymentService {
     // PROCESS PAYMENT
     // ────────────────────────────────────────────────────
 
-    /**
-     * Records a single payment transaction against an order.
-     *
-     * Business rules enforced:
-     *  1. Prevent payment on a CLOSED order          → 409 CONFLICT
-     *  2. Amount must be > 0                          → 400 BAD_REQUEST
-     *  3. Prevent overpayment                         → 400 BAD_REQUEST
-     *  4. Partial payment  → order.status = partial
-     *  5. Full payment     → order.status = closed
-     *                        order.closedAt = now()
-     *                        table.status   = available  (auto-release)
-     */
     @Transactional
     public PaymentResponse processPayment(PaymentRequest request) {
 
@@ -110,7 +95,13 @@ public class PaymentService {
                             request.amount(), remaining));
         }
 
-        // ── 5. Save payment row ────────────────────────
+        // ── 5. Handle Bakong KHQR Initiation ───────────
+        String qrString = null;
+        if (request.method().toString().equalsIgnoreCase("KHQR")) {
+            qrString = bakongService.initiatePayment(request);
+        }
+
+        // ── 6. Save payment row ────────────────────────
         Payment payment = Payment.builder()
                 .order(order)
                 .method(request.method())
@@ -122,29 +113,41 @@ public class PaymentService {
 
         paymentRepository.save(payment);
 
-        // ── 6. Update order paid amount ────────────────
+        // ── 7. Update order paid amount ────────────────
         order.setPaidAmount(newPaidTotal);
 
-        // ── 7. Auto-close + table auto-release ─────────
+        // ── 8. Auto-close + table auto-release ─────────
         if (newPaidTotal.compareTo(finalAmount) == 0) {
             order.setStatus(OrderStatus.closed);
             order.setClosedAt(LocalDateTime.now());
 
-            // Table auto-release back to available
             RestaurantTable table = order.getTable();
             if (table != null) {
                 table.setStatus(TableStatus.available);
                 tableRepository.save(table);
             }
         } else {
-            // Partial — still money owed
             order.setStatus(OrderStatus.partial);
         }
 
         orderRepository.save(order);
 
-        // Return enriched response (includes remainingAmount + orderStatus)
-        return paymentMapper.toResponse(payment);
+        // ── 9. Map to response and add QR ──────────────
+        PaymentResponse response = paymentMapper.toResponse(payment);
+        
+        return PaymentResponse.builder()
+                .id(response.id())
+                .orderId(response.orderId())
+                .method(response.method())
+                .amount(response.amount())
+                .discountAmount(response.discountAmount())
+                .khqrRef(response.khqrRef())
+                .paidAt(response.paidAt())
+                .totalPaidAmount(order.getPaidAmount())
+                .remainingAmount(order.getFinalAmount().subtract(order.getPaidAmount()))
+                .orderStatus(order.getStatus().toString())
+                .qrString(qrString)
+                .build();
     }
 
     // ────────────────────────────────────────────────────
@@ -158,18 +161,15 @@ public class PaymentService {
 
         RestaurantOrder order = payment.getOrder();
 
-        // Reverse the paidAmount on the parent order
         BigDecimal restored = safeAmount(order.getPaidAmount()).subtract(payment.getAmount()).max(BigDecimal.ZERO);
         order.setPaidAmount(restored);
 
-        // Re-open order if it was closed (e.g. correcting a mistake)
         if (order.getStatus() == OrderStatus.closed) {
             order.setStatus(restored.compareTo(BigDecimal.ZERO) == 0
                     ? OrderStatus.open
                     : OrderStatus.partial);
             order.setClosedAt(null);
 
-            // Re-occupy the table
             RestaurantTable table = order.getTable();
             if (table != null) {
                 table.setStatus(TableStatus.occupied);
@@ -182,10 +182,6 @@ public class PaymentService {
         orderRepository.save(order);
         paymentRepository.deleteById(id);
     }
-
-    // ────────────────────────────────────────────────────
-    // HELPERS
-    // ────────────────────────────────────────────────────
 
     private BigDecimal safeAmount(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;

@@ -91,3 +91,11 @@ ul {
     padding-top: 5rem;
   }
 }
+
+.auth-wrapper {
+  flex: 1;
+  width: 100vw;
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+}

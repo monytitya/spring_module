@@ -185,6 +185,21 @@ CREATE TABLE payment (
   CONSTRAINT fk_pay_order FOREIGN KEY (order_id) REFERENCES `order`(id)
 );
 
+CREATE TABLE supplier (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name         VARCHAR(100) NOT NULL,
+  contact_name VARCHAR(100) NULL,
+  phone        VARCHAR(20)  UNIQUE,
+  email        VARCHAR(100) UNIQUE,
+  address      TEXT         NULL,
+  category     VARCHAR(50)  NULL,
+  status       ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  image_path   LONGTEXT     NULL,
+  created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at   TIMESTAMP    NULL
+);
+
 
 CREATE INDEX idx_order_table_status   ON `order`(table_id, status);
 CREATE INDEX idx_order_staff          ON `order`(staff_id);

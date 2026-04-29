@@ -19,5 +19,7 @@ public record PaymentResponse(
     /** Amount still owed on the order after this payment. */
     BigDecimal remainingAmount,
     /** Order status after this payment (open / partial / closed). */
-    String orderStatus
+    String orderStatus,
+    /** KHQR string for Bakong payments. */
+    String qrString
 ) {}
